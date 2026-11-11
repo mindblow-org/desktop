@@ -2,8 +2,9 @@
   import { onMount } from 'svelte'
   import { order } from '../kinds'
   import type { Kind } from '../notes/types'
+  import Icon from '../ui/Icon.svelte'
 
-  let { onpick, onclose }: { onpick: (k: Kind) => void; onclose: () => void } = $props()
+  let { onpick, onscan, onclose }: { onpick: (k: Kind) => void; onscan: () => void; onclose: () => void } = $props()
   let el: HTMLDivElement
   let hot = $state<Kind>('text')
 
@@ -13,6 +14,9 @@
       if (s) {
         e.preventDefault()
         onpick(s.kind)
+      } else if (e.key === '5') {
+        e.preventDefault()
+        onscan()
       } else if (e.key === 'Escape') {
         e.stopPropagation()
         onclose()
@@ -52,6 +56,12 @@
       </button>
     {/each}
   </div>
+  <button class="scan" onclick={onscan}>
+    <Icon name="camera" size={18} />
+    <b>Escanear caderno</b>
+    <span class="say">a foto vira board</span>
+    <span class="kbd">5</span>
+  </button>
 </div>
 
 <style>
@@ -225,6 +235,39 @@
   .mini.todo i.d::before {
     background: var(--ink);
     box-shadow: none;
+  }
+
+  .scan {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    margin-top: 6px;
+    padding: 11px 12px;
+    border: 0;
+    border-top: 1px solid var(--line);
+    border-radius: 0 0 var(--r-md) var(--r-md);
+    background: none;
+    color: var(--soft);
+    cursor: pointer;
+    transition: background 120ms;
+  }
+
+  .scan:hover {
+    background: var(--hover);
+    color: var(--fg);
+  }
+
+  .scan b {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .scan .say {
+    flex: 1;
+    font: 11px var(--mono);
+    color: var(--faint);
+    text-align: left;
   }
 
   @media (max-width: 640px) {
