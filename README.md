@@ -35,6 +35,8 @@ Abra o link da tailnet e use "adicionar à tela inicial". Para conectar outro ap
 
 ## Instalar
 
+Servidor e app desktop para Linux e Windows estão nas [releases](https://github.com/mindblow-org/mindblow/releases/latest). Para compilar e instalar como serviço na sua máquina:
+
 ```sh
 ./deploy/install.sh      # compila, sobe o serviço e publica na tailnet; no fim imprime o link
 cargo run -p mindblow-app --release   # janela desktop, abre o servidor local

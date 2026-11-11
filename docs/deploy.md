@@ -43,6 +43,22 @@ cargo run -p mindblow-app --release
 cd app && pnpm dlx @tauri-apps/cli@2 build   # AppImage e .deb em target/release/bundle
 ```
 
+## Release
+
+Cada push na branch `release` dispara o workflow [release](../.github/workflows/release.yml), que publica a release `vX.Y.Z` no GitHub com:
+
+- o servidor, com a interface embutida: `mindblow-linux-x64`, `mindblow-linux-arm64` e `mindblow-windows-x64.exe`;
+- o app desktop: `.AppImage` e `.deb` no Linux, `-setup.exe` no Windows.
+
+A versão vem de `[workspace.package]` no `Cargo.toml` (o app usa a mesma). Para soltar uma versão nova:
+
+```sh
+# suba a versão no Cargo.toml e commite na main
+git push origin main:release
+```
+
+O workflow cria a release como rascunho, compila tudo e só publica no fim, então uma falha no meio não deixa release incompleta à vista. Se a versão já foi publicada, ele para e avisa para subir a versão. Os instaladores não são assinados: no Windows, o SmartScreen pede confirmação na primeira vez.
+
 ## Celular e outros PCs
 
 Abra o link da tailnet no navegador. No celular, "adicionar à tela inicial" instala como PWA. Para destacar uma nota em janela no navegador, permita popups.
