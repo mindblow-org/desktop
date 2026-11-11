@@ -4,6 +4,7 @@ const KEY = 'mindblow.name'
 
 export function guess(ua: string, app: boolean): string {
   if (app) return 'App desktop'
+  if (/mindblow-android/.test(ua)) return 'App Android'
   const os = /iPhone/.test(ua)
     ? 'iPhone'
     : /iPad/.test(ua)

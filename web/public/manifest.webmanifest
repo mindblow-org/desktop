@@ -5,5 +5,11 @@
   "display": "standalone",
   "background_color": "#f2f2f0",
   "theme_color": "#f2f2f0",
-  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }],
+  "shortcuts": [
+    { "name": "Nova sticky", "short_name": "Sticky", "url": "/#new=sticky" },
+    { "name": "Novo texto", "short_name": "Texto", "url": "/#new=text" },
+    { "name": "Novo todo", "short_name": "Todo", "url": "/#new=todo" },
+    { "name": "Novo board", "short_name": "Board", "url": "/#new=board" }
+  ]
 }

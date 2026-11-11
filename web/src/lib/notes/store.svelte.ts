@@ -31,7 +31,11 @@ class Store {
 
   start() {
     this.#live.on((e) => this.take(e))
-    this.#live.start((on) => (this.online = on))
+    // Sem token, o WebSocket cai sem dizer por quê; a lista por HTTP responde 401 e mostra o Lock.
+    this.#live.start((on) => {
+      this.online = on
+      if (!on && !this.ready) void this.load()
+    })
   }
 
   on(f: (e: Event) => void) {

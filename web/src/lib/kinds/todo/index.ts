@@ -12,6 +12,6 @@ export const todo: Spec = {
   images: 50,
   Card,
   Full,
-  empty: (n) => !n.title.trim() && !n.items.length,
+  empty: (n) => !n.title.trim() && !n.items.length && !n.images.length,
   title: (n) => n.title.trim() || 'Lista',
 }

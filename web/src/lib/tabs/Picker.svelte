@@ -233,7 +233,7 @@
       top: auto;
       left: 12px;
       right: 12px;
-      bottom: calc(12px + env(safe-area-inset-bottom));
+      bottom: calc(var(--dock) + 10px + env(safe-area-inset-bottom));
       width: auto;
       transform-origin: 50% 100%;
     }

@@ -12,6 +12,6 @@ export const sticky: Spec = {
   images: 1,
   Card,
   Full,
-  empty: (n) => !n.body.trim(),
+  empty: (n) => !n.body.trim() && !n.images.length,
   title: (n) => line(n.body) || 'Sticky',
 }

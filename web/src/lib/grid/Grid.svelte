@@ -392,7 +392,7 @@
 
   @media (max-width: 640px) {
     .wall {
-      padding: 8px 18px 48px;
+      padding: 8px 18px calc(var(--dock) + 32px + env(safe-area-inset-bottom));
     }
 
     .filter {

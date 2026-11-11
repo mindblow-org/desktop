@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onMount } from 'svelte'
   import Catch from '../lib/images/Catch.svelte'
   import { kinds } from '../lib/kinds'
   import { store } from '../lib/notes/store.svelte'
@@ -9,6 +10,7 @@
   let { note, onback, ondetach }: { note: Note; onback: () => void; ondetach: () => void } = $props()
   const s = $derived(kinds[note.kind])
   let sure = $state(false)
+  let kit = $state(false)
   let file = $state<HTMLInputElement>()
   let t: ReturnType<typeof setTimeout> | undefined
 
@@ -22,12 +24,32 @@
     store.remove(note.id)
     onback()
   }
+
+  // O voltar (Esc) fecha a barra do board antes de sair dele, depois do que o board já tratou (seleção, ferramenta).
+  onMount(() => {
+    const key = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || !kit || e.cancelBubble) return
+      e.stopPropagation()
+      kit = false
+    }
+    addEventListener('keydown', key, true)
+    return () => removeEventListener('keydown', key, true)
+  })
 </script>
 
-<section class="open" style:view-transition-name="n-{note.id}">
-  <div class="tools">
-    <button class="ib back" onclick={onback}><Icon name="back" size={18} />Notas</button>
-    <span class="sp"></span>
+<section class="open" class:board={note.kind === 'board'} style:view-transition-name="n-{note.id}">
+  <button class="ib back" aria-label="Voltar às notas" title="Voltar às notas" onclick={onback}><Icon name="back" /></button>
+  <div class="body">
+    <Catch {note}>
+      <s.Full {note} {kit} />
+    </Catch>
+  </div>
+  <div class="tools" role="toolbar" aria-label="Ações da nota">
+    {#if note.kind === 'board'}
+      <button class="ib kit" class:on={kit} title="Ferramentas" aria-label="Ferramentas do board" aria-pressed={kit} onclick={() => (kit = !kit)}
+        ><Icon name="pen" /></button
+      >
+    {/if}
     {#if s.images}
       <input
         type="file"
@@ -61,11 +83,6 @@
       {#if sure}<span class="ask">excluir?</span>{:else}<Icon name="trash" />{/if}
     </button>
   </div>
-  <div class="body">
-    <Catch {note}>
-      <s.Full {note} />
-    </Catch>
-  </div>
   {#if store.notice}
     <footer>{store.notice}</footer>
   {/if}
@@ -83,27 +100,18 @@
   .tools {
     position: absolute;
     top: 16px;
-    left: 20px;
     right: 20px;
     z-index: 2;
     display: flex;
     gap: 2px;
-    pointer-events: none;
-  }
-
-  .tools > * {
-    pointer-events: auto;
-  }
-
-  .sp {
-    flex: 1;
   }
 
   .back {
     display: none;
-    gap: 2px;
-    font-size: 15px;
-    padding: 0 8px 0 2px;
+  }
+
+  .kit {
+    display: none;
   }
 
   .sure {
@@ -138,18 +146,83 @@
     pointer-events: none;
   }
 
+  /* No celular as ações viram a toolbar flutuante de baixo, como a do grid, com o voltar à esquerda dela. No board ela ganha o botão que abre a barra de ferramentas dele, logo acima. */
   @media (max-width: 640px) {
-    .tools {
-      position: static;
-      padding: 6px 10px 0;
+    /* Voltar é um botão redondo no canto de baixo, à esquerda da toolbar, no mesmo estilo dela. */
+    .back {
+      position: absolute;
+      left: 16px;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      z-index: 2;
+      display: grid;
+      width: 48px;
+      height: 48px;
+      border-radius: 999px;
+      background: var(--ink);
+      box-shadow: var(--shadow-pop);
+      color: var(--on-ink);
     }
 
-    .back {
-      display: flex;
+    .back:hover {
+      background: var(--ink);
+      color: var(--on-ink);
+    }
+
+    .back :global(svg) {
+      width: 20px;
+      height: 20px;
+    }
+
+    .open:not(.board) .body {
+      padding-top: 14px;
+      padding-bottom: calc(var(--dock) + 16px + env(safe-area-inset-bottom));
+    }
+
+    .tools {
+      top: auto;
+      left: 0;
+      right: 0;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      align-items: center;
+      width: fit-content;
+      height: 48px;
+      margin: 0 auto;
+      padding: 0 4px;
+      border-radius: 999px;
+      background: var(--ink);
+      box-shadow: var(--shadow-pop);
+    }
+
+    .tools .ib {
+      min-width: 48px;
+      height: 40px;
+      border-radius: 999px;
+      color: var(--on-ink);
+    }
+
+    .tools .ib:hover {
+      background: color-mix(in srgb, var(--on-ink) 16%, transparent);
+      color: var(--on-ink);
+    }
+
+    .tools .ib.on,
+    .tools .sure,
+    .tools .sure:hover {
+      background: var(--on-ink);
+      color: var(--ink);
+    }
+
+    .tools .kit {
+      display: grid;
+    }
+
+    .tools .ib :global(svg) {
+      width: 19px;
+      height: 19px;
     }
 
     footer {
-      bottom: calc(10px + env(safe-area-inset-bottom));
+      bottom: calc(var(--dock) + 10px + env(safe-area-inset-bottom));
     }
   }
 </style>
