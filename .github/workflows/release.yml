@@ -47,7 +47,7 @@ jobs:
           cat > notes.md <<'EOF'
           **Servidor** (com a interface embutida): `mindblow-linux-x64`, `mindblow-linux-arm64` e `mindblow-windows-x64.exe`. No Linux, o jeito mais fácil continua sendo o `./deploy/install.sh`, que sobe o serviço e publica na tailnet.
 
-          **App desktop**: `.AppImage` e `.deb` no Linux, `-setup.exe` no Windows. O app abre o servidor em `http://localhost:7341`; para outra máquina, veja [Deploy e configuração](https://github.com/mindblow-org/mindblow/blob/main/docs/deploy.md#app-desktop).
+          **App desktop**: `.AppImage` e `.deb` no Linux, `-setup.exe` no Windows. O app abre o servidor em `http://localhost:7341`; para outra máquina, veja [Deploy e configuração](https://github.com/mindblow-org/desktop/blob/main/docs/deploy.md#app-desktop).
           EOF
           gh release create "$TAG" --draft --target "$GITHUB_SHA" --title "mindblow $TAG" --notes-file notes.md --generate-notes
 

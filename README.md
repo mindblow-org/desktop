@@ -6,7 +6,7 @@
 
 <p align="center">Notas minimalistas que moram numa máquina só e aparecem em todos os seus dispositivos pela tailnet.</p>
 
-<p align="center"><a href="https://mindblow-org.github.io/site/">Site</a> · <a href="https://github.com/mindblow-org/mindblow/releases/latest">Baixar</a></p>
+<p align="center"><a href="https://mindblow-org.github.io/site/">Site</a> · <a href="https://github.com/mindblow-org/desktop/releases/latest">Baixar</a></p>
 
 <p align="center">
   <picture>
@@ -37,7 +37,7 @@ Abra o link da tailnet e use "adicionar à tela inicial". Para conectar outro ap
 
 ## Instalar
 
-Servidor e app desktop para Linux e Windows estão nas [releases](https://github.com/mindblow-org/mindblow/releases/latest). Para compilar e instalar como serviço na sua máquina:
+Servidor e app desktop para Linux e Windows estão nas [releases](https://github.com/mindblow-org/desktop/releases/latest). Para compilar e instalar como serviço na sua máquina:
 
 ```sh
 ./deploy/install.sh      # compila, sobe o serviço e publica na tailnet; no fim imprime o link
