@@ -768,6 +768,7 @@
         ></button>
       {/each}
     </div>
+    <button class="ib" title="Excluir seleção  Del" aria-label="Excluir seleção" disabled={!sel.length} onclick={remove}><Icon name="trash" /></button>
     <i class="sep"></i>
     <button class="ib" title="Desfazer  Ctrl+Z" aria-label="Desfazer" disabled={!past.length} onclick={undo}><Icon name="undo" /></button>
     <button class="ib" title="Refazer  Ctrl+Shift+Z" aria-label="Refazer" disabled={!future.length} onclick={redo}><Icon name="redo" /></button>
