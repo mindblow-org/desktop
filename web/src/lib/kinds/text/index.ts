@@ -12,6 +12,6 @@ export const text: Spec = {
   images: 50,
   Card,
   Full,
-  empty: (n) => !n.title.trim() && !n.body.trim(),
+  empty: (n) => !n.title.trim() && !n.body.trim() && !n.images.length,
   title: (n) => n.title.trim() || line(n.body) || 'Sem título',
 }
