@@ -23,8 +23,6 @@
     onpick: (k: Kind) => void
     onfind: () => void
   } = $props()
-
-  const mac = /Mac|iPhone|iPad/.test(navigator.userAgent)
 </script>
 
 <header class="bar">
@@ -76,7 +74,7 @@
     {/if}
   </div>
   <button class="find" aria-label="Buscar notas" title="Buscar notas" onclick={onfind}>
-    <Icon name="search" size={14} /><span class="l">Buscar</span><span class="kbd">{mac ? '⌘ k' : 'ctrl k'}</span>
+    <Icon name="search" size={14} />
   </button>
   <Sync />
 </header>
@@ -228,31 +226,11 @@
   }
 
   .find {
-    flex: none;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    height: 28px;
-    margin-left: auto;
-    padding: 0 6px 0 10px;
-    border: 0;
-    border-radius: 999px;
-    background: none;
-    box-shadow: inset 0 0 0 1px var(--line);
-    color: var(--muted);
-    font-size: 12.5px;
-    cursor: pointer;
-    transition:
-      background 120ms,
-      color 120ms;
-  }
-
-  .find:hover {
-    background: var(--paper);
-    color: var(--fg);
+    display: none;
   }
 
   .bar > :global(.sync) {
+    margin-left: auto;
     padding-left: 16px;
   }
 
@@ -271,19 +249,23 @@
 
     .find {
       order: 1;
+      display: grid;
+      place-items: center;
       width: 34px;
       height: 34px;
+      margin-left: auto;
       padding: 0;
-      justify-content: center;
-    }
-
-    .find .l,
-    .find .kbd {
-      display: none;
+      border: 0;
+      border-radius: 999px;
+      background: none;
+      box-shadow: inset 0 0 0 1px var(--line);
+      color: var(--muted);
+      cursor: pointer;
     }
 
     .bar > :global(.sync) {
       order: 1;
+      margin-left: 0;
       padding: 0 12px;
     }
 
