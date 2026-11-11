@@ -5,6 +5,7 @@
   import type { Kind } from '../notes/types'
   import Icon from '../ui/Icon.svelte'
   import { grow } from '../ui/motion.svelte'
+  import Frame from '../shell/Frame.svelte'
   import Picker from './Picker.svelte'
   import { tabs } from './store.svelte'
 
@@ -83,6 +84,7 @@
     </button>
     {#if connecting}<Connect onclose={() => (connecting = false)} />{/if}
   </div>
+  <Frame />
 </header>
 
 <style>
@@ -302,6 +304,10 @@
       width: 34px;
       height: 34px;
       box-shadow: inset 0 0 0 1px var(--line);
+    }
+
+    .bar > :global(.frame) {
+      order: 2;
     }
 
     .addw {

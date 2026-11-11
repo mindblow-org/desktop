@@ -6,6 +6,8 @@ interface Win {
   once(e: string, f: () => void): Promise<unknown>
   setFocus(): Promise<void>
   setAlwaysOnTop(on: boolean): Promise<void>
+  minimize(): Promise<void>
+  toggleMaximize(): Promise<void>
   close(): Promise<void>
 }
 
@@ -23,7 +25,7 @@ interface Tauri {
 export function tauri(t: Tauri): Shell {
   const me = () => t.window.getCurrentWindow()
   return {
-    can: { detach: true, pin: true },
+    can: { detach: true, pin: true, frame: true },
     async detach(n) {
       const label = `n-${n.id}`
       const has = await t.webviewWindow.WebviewWindow.getByLabel(label)
@@ -35,6 +37,7 @@ export function tauri(t: Tauri): Shell {
         title: s.title(n),
         width,
         height,
+        decorations: false,
       })
       out.add(n.id)
       void w.once('tauri://destroyed', () => out.delete(n.id))
@@ -47,6 +50,9 @@ export function tauri(t: Tauri): Shell {
     onhome(f) {
       void t.event.listen<string>('home', (e) => f(e.payload))
     },
+    minimize: () => void me().minimize(),
+    maximize: () => void me().toggleMaximize(),
+    close: () => void me().close(),
   }
 }
 

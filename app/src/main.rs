@@ -14,6 +14,7 @@ fn main() {
                 .title("mindblow")
                 .inner_size(1280.0, 820.0)
                 .min_inner_size(420.0, 480.0)
+                .decorations(false)
                 .build()?;
             Ok(())
         })

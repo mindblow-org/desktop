@@ -5,7 +5,7 @@ import { out } from './out.svelte'
 export function web(): Shell {
   const wide = matchMedia('(min-width: 720px) and (pointer: fine)').matches
   return {
-    can: { detach: wide, pin: false },
+    can: { detach: wide, pin: false, frame: false },
     detach(n) {
       const [w, h] = kinds[n.kind].win
       const win = window.open(`/n/${n.id}`, `n-${n.id}`, `popup,width=${w},height=${h}`)
@@ -27,5 +27,8 @@ export function web(): Shell {
         if (e.origin === location.origin && typeof e.data?.home === 'string') f(e.data.home)
       })
     },
+    minimize() {},
+    maximize() {},
+    close() {},
   }
 }

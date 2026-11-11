@@ -3,6 +3,7 @@
   import { kinds } from '../lib/kinds'
   import { store } from '../lib/notes/store.svelte'
   import { shell } from '../lib/shell'
+  import Frame from '../lib/shell/Frame.svelte'
   import Icon from '../lib/ui/Icon.svelte'
   import Lock from './Lock.svelte'
 
@@ -22,16 +23,17 @@
 </script>
 
 <div class="solo {note?.kind ?? ''}">
-  <header>
+  <header data-tauri-drag-region>
     {#if s && note}
       <span class="k"><Icon name={s.icon} size={14} /></span>
-      <span class="t">{note.kind === 'sticky' ? '' : s.title(note)}</span>
+      <span class="t" data-tauri-drag-region>{note.kind === 'sticky' ? '' : s.title(note)}</span>
     {/if}
-    <span class="sp"></span>
+    <span class="sp" data-tauri-drag-region></span>
     {#if shell.can.pin}
       <button class="ib" class:on={pinned} title={pinned ? 'Fixado no topo' : 'Fixar no topo'} aria-label="Fixar no topo" onclick={pin}><Icon name="pin" size={14} /></button>
     {/if}
     <button class="ib" title="Voltar para o app" aria-label="Voltar para o app" onclick={() => shell.home(id)}><Icon name="home" size={14} /></button>
+    <Frame />
   </header>
   <div class="body">
     {#if note && s}
