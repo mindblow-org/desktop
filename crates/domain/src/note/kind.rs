@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
-use super::Note;
+use super::{Note, scene};
 use crate::{Error, Result};
 
 const TITLE: usize = 200;
@@ -10,6 +10,7 @@ const SHORT: usize = 500;
 const LONG: usize = 200_000;
 const ITEMS: usize = 1000;
 const IMAGES: usize = 50;
+const SCENE: usize = 1_000_000;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -17,6 +18,7 @@ pub enum Kind {
     Sticky,
     Text,
     Todo,
+    Board,
 }
 
 pub trait Rule: Sync {
@@ -26,6 +28,7 @@ pub trait Rule: Sync {
 struct Sticky;
 struct Text;
 struct Todo;
+struct Board;
 
 impl Kind {
     pub fn rule(self) -> &'static dyn Rule {
@@ -33,6 +36,7 @@ impl Kind {
             Kind::Sticky => &Sticky,
             Kind::Text => &Text,
             Kind::Todo => &Todo,
+            Kind::Board => &Board,
         }
     }
 
@@ -41,6 +45,7 @@ impl Kind {
             Kind::Sticky => "sticky",
             Kind::Text => "text",
             Kind::Todo => "todo",
+            Kind::Board => "board",
         }
     }
 }
@@ -53,6 +58,7 @@ impl FromStr for Kind {
             "sticky" => Ok(Kind::Sticky),
             "text" => Ok(Kind::Text),
             "todo" => Ok(Kind::Todo),
+            "board" => Ok(Kind::Board),
             _ => Err(Error::Invalid("tipo desconhecido")),
         }
     }
@@ -95,5 +101,15 @@ impl Rule for Todo {
             fits(&i.text, SHORT, "item aceita até 500 caracteres")?;
         }
         Ok(())
+    }
+}
+
+impl Rule for Board {
+    fn check(&self, n: &Note) -> Result<()> {
+        deny(!n.items.is_empty(), "board não tem itens")?;
+        deny(n.images.len() > IMAGES, "nota aceita até 50 imagens")?;
+        fits(&n.title, TITLE, "título aceita até 200 caracteres")?;
+        deny(n.body.len() > SCENE, "board grande demais")?;
+        deny(!n.body.is_empty() && scene::parse(&n.body).is_none(), "cena do board inválida")
     }
 }

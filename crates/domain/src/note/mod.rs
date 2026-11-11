@@ -2,6 +2,7 @@ mod draft;
 mod id;
 mod kind;
 mod patch;
+pub mod scene;
 pub mod image;
 pub mod item;
 

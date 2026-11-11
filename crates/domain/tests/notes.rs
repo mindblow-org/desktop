@@ -224,6 +224,32 @@ fn search_reads_todo_items() {
 }
 
 #[test]
+fn board_holds_a_scene() {
+    let (n, _) = app();
+    let b = n.add(Draft::new(Kind::Board)).unwrap();
+
+    let scene = r#"{"v":1,"els":[{"id":"a","t":"rect","c":0,"x":0,"y":0,"w":40,"h":20}]}"#;
+    assert_eq!(n.edit(b.id, Patch { body: Some(scene.into()), ..Default::default() }).unwrap().body, scene);
+    assert_eq!(
+        n.edit(b.id, Patch { body: Some("rabisco".into()), ..Default::default() }).unwrap_err(),
+        Error::Invalid("cena do board inválida")
+    );
+    assert!(n.add(Draft::new(Kind::Board).item("x")).is_err());
+    assert!(n.add(Draft::new(Kind::Board).body(format!(r#"{{"els":[],"pad":"{}"}}"#, "a".repeat(1_000_000)))).is_err());
+    assert_eq!(n.attach(b.id, "image/png", PNG, 640, 480).unwrap().images.len(), 1);
+}
+
+#[test]
+fn search_reads_board_texts() {
+    let (n, _) = app();
+    let scene = r#"{"v":1,"els":[{"id":"a","t":"text","c":0,"x":0,"y":0,"s":"Fluxo de login"}]}"#;
+    n.add(Draft::new(Kind::Board).title("Arquitetura").body(scene)).unwrap();
+
+    assert_eq!(n.find("login").unwrap()[0].title, "Arquitetura");
+    assert!(n.find("els").unwrap().is_empty());
+}
+
+#[test]
 fn empty_search_lists_everything() {
     let (n, _) = app();
     n.add(Draft::new(Kind::Sticky).body("x")).unwrap();
