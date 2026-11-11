@@ -1,10 +1,12 @@
 import { read, write } from '../local'
-import { close, open, prune, type Tabs } from './tabs'
+import { close, open, prune, solo, type Tabs } from './tabs'
 
 const KEY = 'mindblow.tabs'
+const narrow = matchMedia('(max-width: 640px)')
+const fit = (t: Tabs) => (narrow.matches ? solo(t) : t)
 
 class TabStore {
-  #s = $state<Tabs>(read<Tabs>(KEY) ?? { ids: [], on: null })
+  #s = $state<Tabs>(fit(read<Tabs>(KEY) ?? { ids: [], on: null }))
 
   get ids() {
     return this.#s.ids
@@ -32,8 +34,8 @@ class TabStore {
   }
 
   #put(t: Tabs) {
-    this.#s = t
-    write(KEY, t)
+    this.#s = fit(t)
+    write(KEY, this.#s)
   }
 }
 

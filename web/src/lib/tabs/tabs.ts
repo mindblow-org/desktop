@@ -15,6 +15,12 @@ export function close(t: Tabs, id: string): Tabs {
   return { ids, on }
 }
 
+// No celular não há abas: fica só a nota aberta, e voltar ao grid fecha ela.
+export function solo(t: Tabs): Tabs {
+  const ids = t.on ? [t.on] : []
+  return ids.length === t.ids.length && ids[0] === t.ids[0] ? t : { ids, on: t.on }
+}
+
 export function prune(t: Tabs, alive: Set<string>): Tabs {
   const ids = t.ids.filter((x) => alive.has(x))
   const on = t.on && alive.has(t.on) ? t.on : null

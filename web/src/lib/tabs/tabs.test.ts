@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { close, open, prune } from './tabs'
+import { close, open, prune, solo } from './tabs'
 
 describe('abas', () => {
   it('abrir uma nota já aberta só foca a aba', () => {
@@ -33,5 +33,24 @@ describe('abas', () => {
   it('sem mudança devolve o mesmo estado', () => {
     const t = { ids: ['a'], on: 'a' }
     expect(prune(t, new Set(['a']))).toBe(t)
+  })
+})
+
+describe('celular, uma nota por vez', () => {
+  it('abrir outra nota troca a aberta', () => {
+    expect(solo(open({ ids: ['a'], on: 'a' }, 'b'))).toEqual({ ids: ['b'], on: 'b' })
+  })
+
+  it('voltar ao grid fecha a nota', () => {
+    expect(solo({ ids: ['a'], on: null })).toEqual({ ids: [], on: null })
+  })
+
+  it('abas guardadas de antes ficam só com a ativa', () => {
+    expect(solo({ ids: ['a', 'b', 'c'], on: 'b' })).toEqual({ ids: ['b'], on: 'b' })
+  })
+
+  it('sem mudança devolve o mesmo estado', () => {
+    const t = { ids: ['a'], on: 'a' }
+    expect(solo(t)).toBe(t)
   })
 })
