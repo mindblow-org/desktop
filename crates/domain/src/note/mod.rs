@@ -1,3 +1,4 @@
+mod clock;
 mod draft;
 mod id;
 mod kind;
@@ -6,6 +7,7 @@ pub mod scene;
 pub mod image;
 pub mod item;
 
+pub use clock::{Clock, merge};
 pub use draft::Draft;
 pub use id::Id;
 pub use image::Image;
@@ -31,6 +33,9 @@ pub struct Note {
     pub rank: f64,
     pub created: i64,
     pub updated: i64,
+    /// Fica fora do JSON da nota: só o sync leva, em `Shot`.
+    #[serde(skip)]
+    pub clock: Clock,
 }
 
 impl Note {

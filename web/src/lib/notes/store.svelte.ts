@@ -4,7 +4,7 @@ import { name } from '../devices/name'
 import { shrink } from '../images/shrink'
 import { device, uid } from '../local'
 import { apply, sort } from './apply'
-import type { Event, Image, Item, Kind, Note, Patch, Peer } from './types'
+import type { Event, Image, Item, Kind, Link, Note, Patch, Peer } from './types'
 
 const DELAY = 300
 
@@ -18,6 +18,9 @@ class Store {
   list = $state<Note[]>([])
   peers = $state(0)
   devices = $state<Peer[]>([])
+  links = $state<Link[]>([])
+  /** Por que o último link não ligou (colado ou lido pelo QR do app Android). */
+  wrong = $state('')
   online = $state(false)
   ready = $state(false)
   locked = $state(false)
@@ -52,6 +55,8 @@ class Store {
       this.list = (await api.list()).map((n) => this.#over(n))
       this.locked = false
       this.ready = true
+      // Servidor sem sync responde 404; aí não há links para mostrar.
+      api.links().then((l) => (this.links = l), () => {})
     } catch (e) {
       if (e instanceof Locked) this.locked = true
     }
@@ -62,6 +67,7 @@ class Store {
       this.peers = e.count
       this.devices = e.list ?? []
     } else if (e.type === 'resync') void this.load()
+    else if (e.type === 'sync') this.links = e.list
     else if (e.type === 'deleted') this.list = apply(this.list, e)
     else this.list = apply(this.list, { ...e, note: this.#over(e.note) })
     for (const f of this.#subs) f(e)
@@ -118,6 +124,24 @@ class Store {
   detach(id: string, img: string) {
     this.#set(id, (n) => ({ ...n, images: n.images.filter((i) => i.id !== img) }))
     void this.#run(api.detach(id, img))
+  }
+
+  /** Passa a sincronizar com outro mindblow (o link do QR dele, com ou sem `#token=`). Diz se ligou. */
+  async link(url: string) {
+    this.wrong = ''
+    try {
+      this.links = await api.link(url)
+      return true
+    } catch (e) {
+      if (e instanceof Locked) this.locked = true
+      this.wrong = e instanceof Error && e.message ? e.message : 'não deu para ligar esse link'
+      return false
+    }
+  }
+
+  unlink(url: string) {
+    this.links = this.links.filter((l) => l.url !== url)
+    void api.unlink(url).catch(() => {})
   }
 
   rename(v: string) {

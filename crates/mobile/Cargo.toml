@@ -1,0 +1,14 @@
+[package]
+name = "mobile"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+# O mindblow inteiro numa biblioteca para o app Android (libmindblow.so), que roda o
+# servidor dentro do próprio app e abre a interface na WebView.
+[lib]
+name = "mindblow"
+crate-type = ["cdylib"]
+
+[dependencies]
+server.workspace = true

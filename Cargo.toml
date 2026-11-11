@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/domain", "crates/store", "crates/server", "app"]
+members = ["crates/domain", "crates/store", "crates/server", "crates/mobile", "app"]
 default-members = ["crates/domain", "crates/store", "crates/server"]
 
 [workspace.package]
@@ -11,6 +11,7 @@ license = "MIT"
 [workspace.dependencies]
 domain = { path = "crates/domain" }
 store = { path = "crates/store" }
+server = { path = "crates/server" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 thiserror = "2"

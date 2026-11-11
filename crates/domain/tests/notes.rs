@@ -1,69 +1,11 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+mod mem;
 
-use domain::{Blobs, Bus, Draft, Error, Event, Id, Item, Kind, Note, Notes, Patch, Repo, Result, image, item, rank};
-
-#[derive(Default)]
-struct Mem(Mutex<HashMap<Id, Note>>);
-
-impl Repo for Mem {
-    fn all(&self) -> Result<Vec<Note>> {
-        Ok(self.0.lock().unwrap().values().cloned().collect())
-    }
-
-    fn get(&self, id: Id) -> Result<Option<Note>> {
-        Ok(self.0.lock().unwrap().get(&id).cloned())
-    }
-
-    fn put(&self, n: &Note) -> Result<()> {
-        self.0.lock().unwrap().insert(n.id, n.clone());
-        Ok(())
-    }
-
-    fn del(&self, id: Id) -> Result<bool> {
-        Ok(self.0.lock().unwrap().remove(&id).is_some())
-    }
-
-    fn head(&self) -> Result<Option<f64>> {
-        Ok(self.0.lock().unwrap().values().map(|n| n.rank).reduce(f64::min))
-    }
-}
-
-#[derive(Default)]
-struct Files(Mutex<HashMap<Id, (String, Vec<u8>)>>);
-
-impl Blobs for Files {
-    fn put(&self, id: Id, mime: &str, data: &[u8]) -> Result<()> {
-        self.0.lock().unwrap().insert(id, (mime.into(), data.into()));
-        Ok(())
-    }
-
-    fn get(&self, id: Id) -> Result<Option<(String, Vec<u8>)>> {
-        Ok(self.0.lock().unwrap().get(&id).cloned())
-    }
-
-    fn del(&self, id: Id) -> Result<()> {
-        self.0.lock().unwrap().remove(&id);
-        Ok(())
-    }
-}
-
-type Log = Arc<Mutex<Vec<Event>>>;
+use domain::{Draft, Error, Event, Id, Item, Kind, Notes, Patch, image, item, rank};
+use mem::{Log, full};
 
 fn app() -> (Notes, Log) {
     let (n, log, _) = full();
     (n, log)
-}
-
-fn full() -> (Notes, Log, Arc<Files>) {
-    let bus = Arc::new(Bus::default());
-    let log: Log = Arc::default();
-    let l = log.clone();
-    bus.join(Arc::new(move |e: &Event| l.lock().unwrap().push(e.clone())));
-    let files = Arc::new(Files::default());
-    (Notes::new(Arc::new(Mem::default()), files.clone(), bus), log, files)
 }
 
 fn titles(n: &Notes) -> Vec<String> {

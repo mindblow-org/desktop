@@ -330,7 +330,10 @@
       color: var(--on-ink);
     }
 
-    .bar :global(svg) {
+    /* Só os ícones da toolbar: o popover do Connect mora dentro da barra, e o QR dele é um svg. */
+    .add :global(svg),
+    .find :global(svg),
+    .qrb :global(svg) {
       width: 19px;
       height: 19px;
     }

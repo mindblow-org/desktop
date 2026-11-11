@@ -5,6 +5,7 @@
   import { token } from '../api/token'
   import { device } from '../local'
   import { store } from '../notes/store.svelte'
+  import type { Link } from '../notes/types'
   import { ago } from '../ui/ago'
   import Icon from '../ui/Icon.svelte'
   import { clock } from '../ui/now.svelte'
@@ -13,22 +14,36 @@
   let { onclose }: { onclose: () => void } = $props()
   let el: HTMLDivElement
   let field = $state<HTMLInputElement>()
-  let base = $state<string | null>()
+  let own = $state<string | null>()
   let copied = $state(false)
   let naming = $state(false)
   let draft = $state('')
+  let paste = $state('')
+  let sending = $state(false)
   const me = device()
   const secret = token.get()
   const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname)
-  const qr = $derived(base ? draw(`${base}/${secret ? `#token=${encodeURIComponent(secret)}` : ''}`) : null)
+  // O app Android lê QR pela câmera do sistema e devolve o link em window.mindblowLink.
+  const scanner = (window as unknown as { mindblowAndroid?: { scan: () => void } }).mindblowAndroid
+
+  // Aberto pela tailnet, o QR é o próprio link. No app (servidor junto, em localhost), é o
+  // link da tailnet desta máquina, se ela tem um; se não, o do aparelho com que ela sincroniza.
+  const target = $derived.by((): { url: string; token: string } | null | undefined => {
+    if (!local) return { url: location.origin, token: secret }
+    if (own) return { url: own, token: secret }
+    const l = store.links.find((l) => l.state === 'ok') ?? store.links.find((l) => l.state !== 'self')
+    if (l) return { url: l.url, token: l.token }
+    return own === undefined ? undefined : null
+  })
+  const base = $derived(target?.url)
+  const qr = $derived(target ? draw(`${target.url}/${target.token ? `#token=${encodeURIComponent(target.token)}` : ''}`) : null)
 
   onMount(() => {
-    if (!local) base = location.origin
-    else
+    if (local)
       api
         .health()
-        .then((h) => (base = h.link))
-        .catch(() => (base = null))
+        .then((h) => (own = h.link))
+        .catch(() => (own = null))
     const key = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return
       e.stopPropagation()
@@ -90,6 +105,33 @@
     naming = false
     store.rename(draft)
   }
+
+  async function add(e: SubmitEvent) {
+    e.preventDefault()
+    if (!paste.trim() || sending) return
+    sending = true
+    if (await store.link(paste)) paste = ''
+    sending = false
+  }
+
+  function says(l: Link): string {
+    switch (l.state) {
+      case 'ok':
+        return l.at ? `em dia · ${ago(l.at, clock.now)}` : 'em dia'
+      case 'off':
+        return l.at ? `offline · ${ago(l.at, clock.now)}` : 'offline'
+      case 'old':
+        return 'mindblow sem sync'
+      case 'locked':
+        return 'token não serve'
+      case 'self':
+        return 'é este aparelho'
+      case 'fail':
+        return 'erro'
+      default:
+        return 'conectando…'
+    }
+  }
 </script>
 
 <div class="pop" bind:this={el} role="dialog" aria-label="Conectar outro aparelho">
@@ -104,12 +146,34 @@
         {#if copied}<span class="ok">copiado</span>{:else}<Icon name="copy" size={14} />{/if}
       </button>
     </div>
-    {#if secret}<p class="note">O QR leva o token: quem escanear entra direto, sem digitar.</p>{/if}
-  {:else if base === null}
-    <p class="note none">Sem o link da tailnet. Abra o mindblow pelo link da tailnet, ou rode <code>./deploy/install.sh</code> de novo para o servidor saber qual é.</p>
+    {#if target?.token}<p class="note">O QR leva o token: quem escanear entra direto, sem digitar.</p>{/if}
+  {:else if target === null}
+    <p class="note none">Este aparelho guarda as notas só para ele. Para levar a outro, ligue abaixo o link de um mindblow da sua tailnet, ou rode <code>./deploy/install.sh</code> no PC para ele ter um link.</p>
   {:else}
     <div class="qr wait"></div>
   {/if}
+
+  <div class="head devs"><span>sincroniza com</span></div>
+  <ul>
+    {#each store.links as l (l.url)}
+      <li title={l.error ?? ''}>
+        <i class={l.state}></i>
+        <span class="n">{l.url.replace(/^https?:\/\//, '')}</span>
+        <span class="t">{says(l)}</span>
+        <button class="ib edit" title="Parar de sincronizar" aria-label="Parar de sincronizar com {l.url}" onclick={() => store.unlink(l.url)}><Icon name="x" size={12} /></button>
+      </li>
+    {:else}
+      <li class="empty">só neste aparelho</li>
+    {/each}
+  </ul>
+  <form class="join" onsubmit={add}>
+    <input bind:value={paste} placeholder="link de outro mindblow" aria-label="Link de outro mindblow" autocomplete="off" autocapitalize="off" spellcheck="false" oninput={() => (store.wrong = '')} />
+    {#if scanner}
+      <button type="button" class="ib" title="Ler QR" aria-label="Ler QR" onclick={() => scanner.scan()}><Icon name="qr" size={14} /></button>
+    {/if}
+    <button class="go" disabled={!paste.trim() || sending}>ligar</button>
+  </form>
+  {#if store.wrong}<p class="note bad">{store.wrong}</p>{/if}
 
   <div class="head devs">
     <span>dispositivos conectados</span>
@@ -324,6 +388,57 @@
     color: var(--faint);
   }
 
+  /* Link do sync: verde em dia, apagado offline ou esperando, vermelho quando precisa de ação. */
+  li > i.wait,
+  li > i.off {
+    background: var(--line-strong);
+  }
+
+  li > i.old,
+  li > i.locked,
+  li > i.self,
+  li > i.fail {
+    background: var(--tone-1);
+  }
+
+  .join {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+  }
+
+  .join input {
+    height: 30px;
+    font: 12px var(--mono);
+  }
+
+  .join .ib {
+    min-width: 30px;
+    height: 30px;
+    padding: 0;
+  }
+
+  .go {
+    flex: none;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: var(--r-sm);
+    border: 0;
+    background: var(--ink);
+    color: var(--on-ink);
+    font-size: 12.5px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .go:disabled {
+    opacity: 0.35;
+  }
+
+  .bad {
+    color: var(--tone-1);
+  }
+
   @media (max-width: 640px) {
     .pop {
       position: fixed;
@@ -332,6 +447,8 @@
       right: 12px;
       bottom: calc(var(--dock) + 10px + env(safe-area-inset-bottom));
       width: auto;
+      max-height: calc(100dvh - var(--dock) - 40px);
+      overflow-y: auto;
       transform-origin: 50% 100%;
     }
   }

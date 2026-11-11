@@ -3,13 +3,16 @@
 ```
 crates/domain   regras e casos de uso, sem IO
 crates/store    Repo em SQLite
-crates/server   HTTP, WebSocket e a interface embutida (bin `mindblow`)
-app/            janela Tauri que carrega o servidor
+crates/server   HTTP, WebSocket, sync e a interface embutida (bin `mindblow`)
+crates/mobile   o servidor como libmindblow.so, para o app Android
+app/            janela Tauri, que leva o servidor junto
 web/            interface Svelte 5
 deploy/         systemd + tailscale serve
 ```
 
-Um processo só, numa máquina, guarda tudo. Os dispositivos são clientes: o app Tauri e o navegador/PWA carregam a mesma interface, que o próprio servidor entrega.
+Cada aparelho com app roda o próprio mindblow, com banco próprio, e funciona sem rede: o app desktop sobe o servidor em `localhost:7341` (ou usa o serviço, se ele já ocupa a porta), e o app Android leva o mesmo servidor compilado como `libmindblow.so`. A interface é sempre a mesma, entregue pelo servidor do aparelho. O navegador/PWA é cliente de um mindblow da tailnet, como antes.
+
+Quando um aparelho alcança outro, eles sincronizam (ver [Sync](#sync)). O jeito comum é o PC com o serviço fazer o papel de hub: fica ligado, tem link da tailnet, e o celular e o notebook sincronizam com ele. O protocolo é igual em todos, então qualquer mindblow pode ser link de qualquer outro.
 
 ## Domínio (DDD)
 
@@ -19,10 +22,10 @@ Um processo só, numa máquina, guarda tudo. Os dispositivos são clientes: o ap
   - texto não tem itens;
   - todo não tem corpo e não aceita item vazio;
   - board não tem itens, e o corpo é a cena em JSON (`note::scene`).
-- `Notes` é o serviço de aplicação, com `add`, `edit`, `remove`, `push`, `mark` e `pull`. Cada escrita valida a nota, salva e publica um `Event`.
+- `Notes` é o serviço de aplicação, com `add`, `edit`, `remove`, `push`, `mark` e `pull`. Cada escrita valida a nota, carimba o que mudou (`Clock`), salva e publica um `Event`. Para o sync, `feed`, `take`, `adopt` e `lack`.
 - `Blobs` é a porta dos bytes das imagens. A nota guarda só os dados de cada imagem (`Image`: id, tipo, tamanho, largura e altura), e `Notes::attach`/`detach` cuidam dos dois lados. `remove` apaga também as imagens da nota.
-- `Repo` é a porta de persistência. `store::Sqlite` é a implementação, e os testes do domínio usam um repo em memória.
-- `Bus` é o Observer. O servidor pendura nele o `Live`, que manda os eventos para o WebSocket. Um webhook, por exemplo, seria só mais um `Listener`.
+- `Repo` é a porta de persistência, com o feed de mudanças e as exclusões lembradas. `Links` guarda os outros aparelhos e o id deste. `store::Sqlite` implementa as duas, e os testes do domínio usam um repo em memória (`tests/mem`).
+- `Bus` é o Observer. O servidor pendura nele o `Live`, que manda os eventos para o WebSocket, e o `Syncer`, que acorda o sync. Um webhook, por exemplo, seria só mais um `Listener`.
 
 ## Ordem do grid
 
@@ -49,7 +52,7 @@ As fixadas vêm primeiro e as outras depois. Dentro de cada grupo, vale o `rank:
 
 ## Banco
 
-`store` migra pelo `pragma user_version`. Cada arquivo em `crates/store/src/sql/` é um passo, aplicado uma vez dentro de uma transação. Bancos antigos sobem de versão sozinhos ao abrir.
+`store` migra pelo `pragma user_version`. Cada arquivo em `crates/store/src/sql/` é um passo, aplicado uma vez dentro de uma transação. Bancos antigos sobem de versão sozinhos ao abrir; no passo 4, as notas que já existiam entram no feed na ordem em que foram criadas.
 
 ## Imagens
 
@@ -59,16 +62,36 @@ As fixadas vêm primeiro e as outras depois. Dentro de cada grupo, vale o `rank:
 
 ## Sync
 
-- Toda escrita volta como evento em `/api/live` para todos os clientes, inclusive quem escreveu.
-- Conflito resolve por última escrita: o servidor carimba `updated`, e o cliente ignora evento mais velho que o que já tem.
-- O cliente aplica a edição na hora (otimista) e manda um PATCH com debounce de 300 ms. Enquanto há edição pendente, ela fica por cima do que chega do servidor.
+> [!WARNING]
+> O sync foi testado entre servidores no PC (`crates/server/tests/sync.rs`), mas o app Android com o servidor junto ainda não foi validado num celular de verdade. Ver o roteiro em "Testar no aparelho" no README do [app Android](https://github.com/mindblow-org/android).
+
+### Na interface
+
+- O cliente fala só com o servidor do aparelho. Toda escrita volta como evento em `/api/live` para todos os clientes dele, inclusive quem escreveu, e o que chega pelo sync também.
+- O cliente aplica a edição na hora (otimista) e manda um PATCH com debounce de 300 ms. Enquanto há edição pendente, ela fica por cima do que chega do servidor, e evento mais velho que o que já tem é ignorado.
 - Ao reconectar, o cliente recarrega a lista. Se ficou para trás no canal, o servidor manda `resync`.
+
+### Entre aparelhos
+
+- **Feed.** Cada escrita no banco pega a próxima posição (`meta.seq`) e grava em `notes.seq`, ou em `gone.seq` quando é uma exclusão. `GET /api/sync?since=` devolve o que mudou depois de uma posição, 50 por página, com o id do aparelho.
+- **Relógio por campo.** Cada nota guarda em `clock` quando título, corpo, fixar, ordem, cada item e cada imagem mudaram. Item ou imagem que está no relógio e não na nota foi removido; isso fica lembrado por 90 dias. O PATCH com a lista inteira de itens é comparado item a item, então só o que mudou ganha carimbo novo.
+- **Junção.** `merge` fica, em cada campo, com o carimbo mais novo; itens e imagens são juntados um a um, e a ordem é a da versão mais nova. O resultado é o mesmo nos dois sentidos, então os aparelhos convergem. Se a junção quebrar a regra do tipo (51 imagens, por exemplo), vale a versão mais nova inteira.
+- **Relógio híbrido.** O carimbo é o maior entre o relógio da máquina e o último visto + 1. Uma edição feita depois de receber outra ganha dela, mesmo com o relógio do celular atrasado. Carimbo mais de um dia no futuro não puxa o relógio.
+- **Exclusão.** Excluir guarda a nota em `gone`. Ela some do outro lado se lá ela não foi editada depois; se foi, a edição ganha e a nota volta para quem excluiu. Exclusão de nota que este aparelho nem tem também fica guardada, para uma cópia velha vinda de um terceiro não ressuscitar a nota.
+- **Syncer.** Para cada link (tabela `links`), um laço puxa o feed de lá (cursor `pull`), junta com `take` e depois empurra o daqui (cursor `push`). `take` só grava o que muda algo, então o que volta para onde saiu não ecoa. Ele também devolve a posição do feed antes e depois (`Took`): se nada daqui estava esperando, o que entrou não precisa voltar, e o cursor anda junto. O mesmo vale do outro lado no `POST /api/sync`.
+- **Imagens.** A nota anda sem os bytes. Quem recebe responde as imagens que faltam (`need`), e elas vão por `PUT /api/images/{id}` ou são baixadas por `GET`. Na primeira volta de cada link, `lack` procura as que ficaram para trás.
+- **Quando sincroniza.** Mudança daqui (pelo `Bus`), mudança de lá (o laço fica ligado no `/api/live` do link) ou um minuto sem nada. Sem resposta, a espera dobra de 1 s até 30 s, e o `/api/live` de lá voltar acorda o laço na hora. Token que não serve ou link que é este próprio aparelho param o laço até o link mudar.
+- **Estado.** Cada link está `wait`, `ok`, `off`, `old` (mindblow sem sync), `locked`, `self` ou `fail`. Ele vem em `GET /api/links` e no evento `sync`.
+- **TLS.** O cliente usa rustls com ring e as raízes do `webpki-roots`, sem o verificador do sistema, para compilar igual no Linux, no Windows e no Android.
+- **Limites.** O mesmo campo editado nos dois lados fica com a edição mais nova: dois textos no mesmo corpo não se misturam, e um board é um campo só (a cena inteira). No Android, o sync roda enquanto o processo do app está vivo.
 
 ## Dispositivos
 
 - `Live` guarda cada aparelho conectado (id, nome, desde quando) e conta janelas do mesmo aparelho como um só. Cada entrada, saída ou troca de nome manda `peers` com a contagem e a lista.
-- O nome vem do cliente: o que a pessoa escreveu (no `localStorage`) ou um palpite pelo navegador (`web/src/lib/devices/name.ts`: "Linux · Chrome", "iPhone · Safari", "App desktop").
-- "Conectar outro aparelho" (`Connect.svelte`) gera o QR no navegador com `uqr`. O link é o endereço da página, ou o `link` do `/api/health` quando a página foi aberta por `localhost`. Com token, ele vai no `#token=` do link.
+- O laço de cada link entra no `/api/live` de lá com o id e o nome deste aparelho (o da janela mais antiga que tem nome), e a lista que vem de lá entra na daqui. Assim o celular aparece no PC, e o PC e o notebook aparecem no celular.
+- O nome vem do cliente: o que a pessoa escreveu (no `localStorage`) ou um palpite pelo navegador (`web/src/lib/devices/name.ts`: "Linux · Chrome", "iPhone · Safari", "App desktop", "App Android").
+- "Conectar outro aparelho" (`Connect.svelte`) gera o QR no navegador com `uqr`. O link é o endereço da página; aberto por `localhost` (o app), é o `link` do `/api/health`, e sem ele, o do aparelho com que este sincroniza. Com token, ele vai no `#token=` do link.
+- O mesmo popover lista os links do sync, liga um novo (colando o link do QR de outro mindblow) e para de sincronizar. No app Android, "ler QR" abre a câmera pelo `window.mindblowAndroid.scan()`, e o link volta em `window.mindblowLink(url)`.
 
 ## Interface
 
