@@ -2054,6 +2054,7 @@ dependencies = [
 name = "mindblow-app"
 version = "0.1.0"
 dependencies = [
+ "server",
  "tauri",
  "tauri-build",
 ]
@@ -2087,6 +2088,13 @@ dependencies = [
  "libc",
  "wasi",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "mobile"
+version = "0.1.0"
+dependencies = [
+ "server",
 ]
 
 [[package]]
