@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use super::{Id, Item, Kind, Note};
+use super::{Clock, Id, Item, Kind, Note};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Draft {
@@ -41,7 +41,7 @@ impl Draft {
     }
 
     pub fn note(self, rank: f64, now: i64) -> Note {
-        Note {
+        let mut n = Note {
             id: Id::new(),
             kind: self.kind,
             title: self.title,
@@ -52,6 +52,9 @@ impl Draft {
             rank,
             created: now,
             updated: now,
-        }
+            clock: Clock::default(),
+        };
+        n.clock = Clock::at(&n, now);
+        n
     }
 }

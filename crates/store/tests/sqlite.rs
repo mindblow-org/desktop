@@ -1,6 +1,6 @@
 use std::{path::PathBuf, sync::Arc};
 
-use domain::{Bus, Draft, Id, Kind, Notes, item};
+use domain::{Bus, Draft, Id, Kind, Link, Links, Notes, Patch, item};
 use store::Sqlite;
 
 struct Tmp(PathBuf);
@@ -13,6 +13,10 @@ impl Tmp {
     fn notes(&self) -> Notes {
         let db = Arc::new(Sqlite::open(&self.0).unwrap());
         Notes::new(db.clone(), db, Arc::new(Bus::default()))
+    }
+
+    fn db(&self) -> Sqlite {
+        Sqlite::open(&self.0).unwrap()
     }
 }
 
@@ -104,8 +108,9 @@ fn old_database_keeps_notes_after_upgrade() {
     let n = tmp.notes();
     let note = n.get(id).unwrap();
     assert_eq!((note.title.as_str(), note.pinned), ("Ideia", false));
-    n.edit(id, domain::Patch { pinned: Some(true), ..Default::default() }).unwrap();
+    n.edit(id, Patch { pinned: Some(true), ..Default::default() }).unwrap();
     assert!(n.get(id).unwrap().pinned);
+    assert_eq!(n.feed(0, 10).unwrap().notes[0].note.id, id);
 }
 
 #[test]
@@ -123,4 +128,54 @@ fn images_survive_restart_and_leave_with_the_note() {
 
     n.remove(t.id).unwrap();
     assert!(n.image(img).is_err());
+}
+
+#[test]
+fn feed_and_clock_survive_restart() {
+    let tmp = Tmp::new();
+    let n = tmp.notes();
+    let t = n.add(Draft::new(Kind::Todo).title("Mercado").item("café")).unwrap();
+    let t = n.edit(t.id, Patch { title: Some("Feira".into()), ..Default::default() }).unwrap();
+    let s = n.add(Draft::new(Kind::Sticky).body("oi")).unwrap();
+    n.remove(s.id).unwrap();
+    drop(n);
+
+    let n = tmp.notes();
+    let f = n.feed(0, 10).unwrap();
+    assert_eq!(f.notes.len(), 1);
+    assert_eq!(f.notes[0].clock, t.clock);
+    assert_eq!(f.gone[0].id, s.id);
+    assert_eq!(f.seq, n.seq().unwrap());
+    assert!(n.feed(f.seq, 10).unwrap().notes.is_empty());
+}
+
+#[test]
+fn delete_from_elsewhere_is_remembered() {
+    let tmp = Tmp::new();
+    let n = tmp.notes();
+    let id = Id::new();
+
+    n.take(vec![], vec![domain::Gone { id, at: 10 }]).unwrap();
+    n.take(vec![], vec![domain::Gone { id, at: 5 }]).unwrap();
+
+    let f = n.feed(0, 10).unwrap();
+    assert_eq!(f.gone, [domain::Gone { id, at: 10 }]);
+}
+
+#[test]
+fn links_keep_their_cursors() {
+    let tmp = Tmp::new();
+    let db = tmp.db();
+    let me = db.node().unwrap();
+    db.join(&Link::new("https://pc.tail.ts.net:7341", "a")).unwrap();
+    db.moved("https://pc.tail.ts.net:7341", 7, 3).unwrap();
+    db.join(&Link::new("https://pc.tail.ts.net:7341", "b")).unwrap();
+    drop(db);
+
+    let db = tmp.db();
+    assert_eq!(db.node().unwrap(), me);
+    let l = &db.links().unwrap()[0];
+    assert_eq!((l.token.as_str(), l.pull, l.push), ("b", 7, 3));
+    assert!(db.part(&l.url).unwrap());
+    assert!(db.links().unwrap().is_empty());
 }
