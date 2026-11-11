@@ -4,7 +4,7 @@
 
 <h1 align="center">mindblow</h1>
 
-<p align="center">Notas minimalistas que moram numa máquina só e aparecem em todos os seus dispositivos pela tailnet.</p>
+<p align="center">Notas minimalistas que moram em cada aparelho, funcionam sem internet e se sincronizam pela tailnet.</p>
 
 <p align="center"><a href="https://mindblow-org.github.io/site/">Site</a> · <a href="https://github.com/mindblow-org/desktop/releases/latest">Baixar</a></p>
 
@@ -17,7 +17,7 @@
 
 Há quatro tipos de nota: **sticky**, **texto**, **todo** e **board**. Elas ficam num grid em que dá para arrastar os cards, abrem em abas e qualquer uma pode virar uma janela própria. Outros apps criam, mudam e tiram notas pela API.
 
-Por baixo: servidor em Rust (axum + SQLite), interface em Svelte 5 e app desktop em Tauri 2.
+Por baixo: servidor em Rust (axum + SQLite), interface em Svelte 5, app desktop em Tauri 2 e app Android. Os apps levam o servidor junto, com banco próprio; quando um aparelho alcança outro, eles trocam as mudanças campo a campo.
 
 ## Board
 
@@ -29,7 +29,12 @@ Um quadro branco simples: caneta, formas, setas, texto e imagens. Dá para selec
 
 ## No celular
 
-Abra o link da tailnet e use "adicionar à tela inicial". Para conectar outro aparelho, o botão de QR no canto de cima mostra o código e quem está conectado agora.
+O [app Android](https://github.com/mindblow-org/android) guarda as notas no próprio celular e funciona sem internet. Para levar as notas a outro aparelho, o botão de QR no canto de cima mostra o código, liga o sync com outro mindblow (lendo o QR dele) e lista quem está conectado.
+
+> [!WARNING]
+> O app Android com o servidor junto ainda não foi testado num celular de verdade; falta validar com o aparelho plugado.
+
+Sem o app, abra o link da tailnet no navegador e use "adicionar à tela inicial".
 
 <p align="center">
   <img src="docs/images/mobile.png" alt="Três telas de celular: o grid de notas, o QR para conectar outro aparelho com a lista de dispositivos e um board no modo escuro">
@@ -41,7 +46,7 @@ Servidor e app desktop para Linux e Windows estão nas [releases](https://github
 
 ```sh
 ./deploy/install.sh      # compila, sobe o serviço e publica na tailnet; no fim imprime o link
-cargo run -p mindblow-app --release   # janela desktop, abre o servidor local
+cargo run -p mindblow-app --release   # janela desktop, com o servidor junto
 ```
 
 ## Desenvolver

@@ -1,6 +1,6 @@
 # API
 
-Base: `http://localhost:7341` ou o link da tailnet. JSON em tudo.
+Base: `http://localhost:7341` (o app desktop e o Android têm um servidor desses dentro) ou o link da tailnet. JSON em tudo.
 
 ## Nota
 
@@ -69,8 +69,14 @@ O `body` de um board vazio é `""`. Com desenho, é um JSON assim:
 | POST | `/api/notes/{id}/images` | bytes da imagem, `Content-Type: image/*`, `?w=&h=` opcionais | `201` nota |
 | DELETE | `/api/notes/{id}/images/{img}` | | nota |
 | GET | `/api/images/{img}` | | bytes, com cache imutável |
+| PUT | `/api/images/{img}` | bytes de uma imagem que veio de outro aparelho, `Content-Type: image/*` | `204` |
 | GET | `/api/live` | WebSocket | eventos |
-| GET | `/api/health` | | `{ok, version, link}` |
+| GET | `/api/health` | | `{ok, version, link, node}` |
+| GET | `/api/sync` | `?since=&limit=` | página do feed |
+| POST | `/api/sync` | `{notes, gone}` | `{from, to, need}` |
+| GET | `/api/links` | | estado do sync com cada link |
+| POST | `/api/links` | `{url, token?}` | `201` lista |
+| DELETE | `/api/links` | `?url=` | `204` |
 
 A ordem da lista põe as fixadas (`pinned: true`) primeiro e depois segue o `rank`.
 
@@ -88,12 +94,39 @@ Notas e itens aceitam o `id` vindo de quem cria. Se não vier, o servidor gera u
 { "type": "deleted", "id": "…" }
 { "type": "peers", "count": 2, "list": [{ "id": "…", "name": "Notebook", "since": 1794413817178 }, { "id": "…", "name": "iPhone · Safari", "since": 1794413900000 }] }
 { "type": "resync" }
+{ "type": "sync", "list": [{ "url": "https://pc.tail1234.ts.net:7341", "token": "…", "state": "ok", "at": 1794413817178 }] }
 ```
 
 - `?d=<id do dispositivo>` faz várias janelas do mesmo aparelho contarem como um só em `peers`.
 - `?n=<nome>` dá nome ao aparelho na lista (até 40 caracteres). Para renomear sem reconectar, o cliente manda `{"type":"name","name":"Celular"}` pelo próprio WebSocket, e todos recebem um `peers` novo.
 - `list` vem em ordem de chegada; `since` é quando o aparelho conectou.
 - `resync` avisa que o cliente perdeu eventos e precisa recarregar a lista.
+- `list` de `peers` junta os aparelhos ligados a este com os que cada link do sync conta.
+- `sync` traz o estado de cada link sempre que ele muda.
+
+## Sync
+
+Cada mindblow guarda um feed das próprias mudanças e sincroniza com os links que conhece. Quem usa a API normal não precisa de nada disto; é o que um mindblow fala com outro.
+
+`GET /api/sync?since=12` (até 50 por página, ou `limit`):
+
+```json
+{
+  "node": "0193…",
+  "seq": 40,
+  "more": false,
+  "notes": [{ "note": { … }, "clock": { "title": 1794413817178, "body": 1794413817178, "pinned": 0, "rank": 0, "items": { "0193…": 1794413817178 } } }],
+  "gone": [{ "id": "0193…", "at": 1794413900000 }]
+}
+```
+
+- `seq` é a posição do feed até onde a página vai; a próxima começa dali. `node` é o id do aparelho, para um link que aponta para o próprio aparelho ser notado.
+- `clock` diz quando cada campo, item e imagem mudou. Item ou imagem que está no `clock` e não na nota foi removido.
+- `gone` são notas excluídas, com quando.
+
+`POST /api/sync` leva `{notes, gone}` no mesmo formato e junta campo a campo com o que já existe (o carimbo mais novo ganha). Responde `{from, to, need}`: a posição do feed antes e depois do lote e as imagens que faltam, para quem mandou enviar por `PUT /api/images/{img}`.
+
+`POST /api/links` aceita o link como o QR traz (`https://pc.tail1234.ts.net:7341/#token=…`): fica a origem, e o `#token=` vira o token. Ligar de novo um link que já existe troca o token e mantém o que já foi sincronizado. O estado de cada link é `wait`, `ok`, `off` (não respondeu), `old` (mindblow sem sync), `locked` (token não serve), `self` (é este aparelho) ou `fail`, com `at` do último sync que deu certo.
 
 ## Acesso
 
@@ -102,6 +135,8 @@ Notas e itens aceitam o `id` vindo de quem cria. Se não vier, o servidor gera u
 - Com `MINDBLOW_TOKEN` definido, toda `/api/*` exige `Authorization: Bearer <token>`. No WebSocket e no `<img>` de `/api/images`, o token vai em `?token=`.
 - A interface aceita o token no fim do link, em `#token=<token>`: guarda no aparelho e tira do endereço. É o que o QR de "conectar outro aparelho" usa. O `#` não vai para o servidor nem para os logs, mas quem vir o QR na tela consegue entrar.
 - `link` do `/api/health` é o link da tailnet (`MINDBLOW_LINK`), para o QR funcionar quando a página foi aberta por `localhost`.
+- No app Android, o servidor de dentro do app exige um token aleatório, criado na instalação: `127.0.0.1` é o mesmo para todos os apps do celular.
+- O token de cada link fica no banco do aparelho, e `GET /api/links` devolve ele para a interface montar o QR.
 
 ## Exemplos
 
