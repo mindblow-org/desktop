@@ -1,3 +1,4 @@
+import { read, words } from '../kinds/board/scene'
 import type { Note } from '../notes/types'
 
 export interface Part {
@@ -50,7 +51,8 @@ export function search(list: Note[], q: string, name: (n: Note) => string, max =
 }
 
 function rest(n: Note, title: string): string {
-  const parts = [n.body, ...n.items.map((i) => i.text)].map((s) => s.replace(/\s+/g, ' ').trim()).filter(Boolean)
+  const body = n.kind === 'board' ? words(read(n.body)) : n.body
+  const parts = [body, ...n.items.map((i) => i.text)].map((s) => s.replace(/\s+/g, ' ').trim()).filter(Boolean)
   const text = parts.join(' · ')
   return text === title ? '' : text
 }

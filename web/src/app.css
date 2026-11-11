@@ -11,6 +11,10 @@
   --faint: #a8a8a2;
   --ink: #151515;
   --on-ink: #fafafa;
+  --tone-1: #d6403f;
+  --tone-2: #3a66d4;
+  --tone-3: #2b955f;
+  --tone-4: #d68510;
   --shadow-card: 0 1px 2px rgb(0 0 0 / 0.04);
   --shadow-lift: 0 22px 48px rgb(0 0 0 / 0.16), 0 3px 8px rgb(0 0 0 / 0.06);
   --shadow-pop: 0 14px 36px rgb(0 0 0 / 0.14), 0 1px 3px rgb(0 0 0 / 0.06);
@@ -38,6 +42,10 @@
     --faint: #5c5c58;
     --ink: #ededeb;
     --on-ink: #111111;
+    --tone-1: #ff6f6b;
+    --tone-2: #7ea4ff;
+    --tone-3: #5cc78f;
+    --tone-4: #f0b44a;
     --shadow-card: none;
     --shadow-lift: 0 22px 48px rgb(0 0 0 / 0.6), 0 0 0 1px rgb(255 255 255 / 0.06);
     --shadow-pop: 0 14px 36px rgb(0 0 0 / 0.55), 0 0 0 1px rgb(255 255 255 / 0.06);

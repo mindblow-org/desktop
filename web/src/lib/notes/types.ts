@@ -1,4 +1,4 @@
-export type Kind = 'sticky' | 'text' | 'todo'
+export type Kind = 'sticky' | 'text' | 'todo' | 'board'
 
 export interface Item {
   id: string

@@ -9,6 +9,7 @@ export const text: Spec = {
   key: '2',
   ratio: Math.SQRT2,
   win: [560, 680],
+  images: 50,
   Card,
   Full,
   empty: (n) => !n.title.trim() && !n.body.trim(),

@@ -40,6 +40,8 @@
           <span class="mini {s.kind}">
             {#if s.kind === 'sticky'}
               <i></i><i class="s"></i>
+            {:else if s.kind === 'board'}
+              <svg viewBox="0 0 44 30" aria-hidden="true"><rect x="4" y="5" width="15" height="11" rx="2" /><path d="M24 22c3-6 6-6 8 0s5 4 8-3" /></svg>
             {:else}
               <i class="h"></i>{#each [1, 2, 3, 4] as x (x)}<i class:d={s.kind === 'todo' && x === 1} class:s={x === 4}></i>{/each}
             {/if}
@@ -58,7 +60,7 @@
     top: 38px;
     left: -10px;
     z-index: 50;
-    width: 336px;
+    width: 420px;
     padding: 14px;
     background: var(--paper);
     border: 1px solid var(--line);
@@ -85,7 +87,7 @@
 
   .kinds {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 6px;
   }
 
@@ -142,6 +144,22 @@
     background: var(--sticky);
   }
 
+  .mini.board {
+    justify-content: center;
+    width: 62px;
+    height: 44px;
+    padding: 5px;
+    background: var(--paper);
+    box-shadow: inset 0 0 0 1px var(--line-strong);
+  }
+
+  .mini.board svg {
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 1.6;
+    stroke-linecap: round;
+  }
+
   .mini.text,
   .mini.todo {
     height: 65px;
@@ -150,7 +168,8 @@
   }
 
   .kind.on .mini.text,
-  .kind.on .mini.todo {
+  .kind.on .mini.todo,
+  .kind.on .mini.board {
     box-shadow:
       inset 0 0 0 1px var(--line-strong),
       var(--shadow-pop);

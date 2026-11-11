@@ -9,6 +9,7 @@ export interface Spec {
   key: string
   ratio: number
   win: [number, number]
+  images: number
   Card: Component<{ note: Note }>
   Full: Component<{ note: Note; solo?: boolean }>
   empty(n: Note): boolean

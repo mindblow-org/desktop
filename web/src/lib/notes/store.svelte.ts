@@ -3,7 +3,7 @@ import { Live } from '../api/live'
 import { shrink } from '../images/shrink'
 import { device, uid } from '../local'
 import { apply, sort } from './apply'
-import type { Event, Item, Kind, Note, Patch } from './types'
+import type { Event, Image, Item, Kind, Note, Patch } from './types'
 
 const DELAY = 300
 
@@ -101,6 +101,12 @@ class Store {
     for (const [i, f] of pics.entries()) await this.#send(n.id, f, ups[i])
   }
 
+  upload(id: string, f: File) {
+    const up = { key: uid(), note: id, url: URL.createObjectURL(f) }
+    this.uploads = [...this.uploads, up]
+    return this.#send(id, f, up)
+  }
+
   detach(id: string, img: string) {
     this.#set(id, (n) => ({ ...n, images: n.images.filter((i) => i.id !== img) }))
     void this.#run(api.detach(id, img))
@@ -113,13 +119,16 @@ class Store {
     }, 4000)
   }
 
-  async #send(id: string, f: File, up: Upload) {
+  async #send(id: string, f: File, up: Upload): Promise<Image | undefined> {
     try {
       const s = await shrink(f)
       const n = this.find(id)
       if (!n) return
       if (n.kind === 'sticky' && n.images[0]) await api.detach(n.id, n.images[0].id)
-      this.take({ type: 'updated', note: await api.attach(n.id, s.blob, s.w, s.h) })
+      const had = new Set(n.images.map((i) => i.id))
+      const m = await api.attach(n.id, s.blob, s.w, s.h)
+      this.take({ type: 'updated', note: m })
+      return m.images.find((i) => !had.has(i.id))
     } catch (e) {
       if (e instanceof Locked) this.locked = true
       this.say(e instanceof Error && e.message ? e.message : 'não deu para enviar a imagem')

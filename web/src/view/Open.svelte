@@ -9,7 +9,7 @@
   let { note, onback, ondetach }: { note: Note; onback: () => void; ondetach: () => void } = $props()
   const s = $derived(kinds[note.kind])
   let sure = $state(false)
-  let file: HTMLInputElement
+  let file = $state<HTMLInputElement>()
   let t: ReturnType<typeof setTimeout> | undefined
 
   function del() {
@@ -28,23 +28,25 @@
   <div class="tools">
     <button class="ib back" onclick={onback}><Icon name="back" size={18} />Notas</button>
     <span class="sp"></span>
-    <input
-      type="file"
-      accept="image/*"
-      multiple={note.kind !== 'sticky'}
-      hidden
-      bind:this={file}
-      onchange={(e) => {
-        void store.attach(note.id, [...(e.currentTarget.files ?? [])])
-        e.currentTarget.value = ''
-      }}
-    />
-    <button
-      class="ib"
-      title={note.kind === 'sticky' && note.images.length ? 'Trocar imagem' : 'Anexar imagem (ou cole com Ctrl+V)'}
-      aria-label="Anexar imagem"
-      onclick={() => file.click()}><Icon name="image" /></button
-    >
+    {#if s.images}
+      <input
+        type="file"
+        accept="image/*"
+        multiple={s.images > 1}
+        hidden
+        bind:this={file}
+        onchange={(e) => {
+          void store.attach(note.id, [...(e.currentTarget.files ?? [])])
+          e.currentTarget.value = ''
+        }}
+      />
+      <button
+        class="ib"
+        title={note.kind === 'sticky' && note.images.length ? 'Trocar imagem' : 'Anexar imagem (ou cole com Ctrl+V)'}
+        aria-label="Anexar imagem"
+        onclick={() => file?.click()}><Icon name="image" /></button
+      >
+    {/if}
     <button
       class="ib"
       class:on={note.pinned}
@@ -127,6 +129,7 @@
   }
 
   .body {
+    position: relative;
     flex: 1;
     overflow: auto;
   }

@@ -9,6 +9,7 @@ export const todo: Spec = {
   key: '3',
   ratio: Math.SQRT2,
   win: [420, 580],
+  images: 50,
   Card,
   Full,
   empty: (n) => !n.title.trim() && !n.items.length,

@@ -9,6 +9,7 @@ export const sticky: Spec = {
   key: '1',
   ratio: 1,
   win: [320, 340],
+  images: 1,
   Card,
   Full,
   empty: (n) => !n.body.trim(),

@@ -253,7 +253,8 @@
   }
 
   .card.text,
-  .card.todo {
+  .card.todo,
+  .card.board {
     padding: 16px 16px 14px;
     background: var(--paper);
     border: 1px solid var(--line);
@@ -268,7 +269,8 @@
   }
 
   .small .card.text,
-  .small .card.todo {
+  .small .card.todo,
+  .small .card.board {
     padding: 12px 12px 11px;
   }
 

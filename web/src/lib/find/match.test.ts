@@ -73,4 +73,10 @@ describe('fold', () => {
     expect(fold(s).length).toBe(s.length)
     expect(text(mark(s, fold(s), ['ja']))).toBe('Ação rápida 🚀 [já]')
   })
+
+  it('no board só os textos da cena contam', () => {
+    const b = note({ kind: 'board', title: 'Arquitetura', body: JSON.stringify({ v: 1, els: [{ id: 'a', t: 'text', c: 0, x: 0, y: 0, s: 'fila de jobs' }] }) })
+    expect(titles('jobs', [b])).toEqual(['Arquitetura'])
+    expect(titles('els', [b])).toEqual([])
+  })
 })
