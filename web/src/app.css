@@ -80,6 +80,12 @@ body {
   display: none !important;
 }
 
+img,
+svg,
+a {
+  -webkit-user-drag: none;
+}
+
 button {
   font: inherit;
   color: inherit;
