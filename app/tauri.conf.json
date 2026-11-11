@@ -1,7 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "mindblow",
-  "version": "0.1.0",
   "identifier": "app.mindblow.desktop",
   "build": {},
   "app": {
@@ -14,6 +13,6 @@
     "targets": ["appimage", "deb"],
     "category": "Productivity",
     "shortDescription": "Notas minimalistas na sua tailnet",
-    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png"]
+    "icon": ["icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png", "icons/icon.png", "icons/icon.ico"]
   }
 }
