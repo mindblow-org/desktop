@@ -1,0 +1,155 @@
+name: release
+
+on:
+  push:
+    branches: [release]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+  TAURI_CLI: "@tauri-apps/cli@2.12.4"
+
+jobs:
+  prepare:
+    name: preparar
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: versão do Cargo.toml
+        id: version
+        run: |
+          v=$(sed -n '/^\[workspace.package\]/,/^\[/s/^version = "\(.*\)"/\1/p' Cargo.toml)
+          [ -n "$v" ] || { echo "::error::versão não encontrada em [workspace.package] no Cargo.toml"; exit 1; }
+          echo "tag=v$v" >> "$GITHUB_OUTPUT"
+
+      - name: rascunho da release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if draft=$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null); then
+            if [ "$draft" = "false" ]; then
+              echo "::error::$TAG já foi publicada. Suba a versão em [workspace.package] no Cargo.toml antes de dar push na release."
+              exit 1
+            fi
+            gh release delete "$TAG" --yes
+          fi
+          cat > notes.md <<'EOF'
+          **Servidor** (com a interface embutida): `mindblow-linux-x64`, `mindblow-linux-arm64` e `mindblow-windows-x64.exe`. No Linux, o jeito mais fácil continua sendo o `./deploy/install.sh`, que sobe o serviço e publica na tailnet.
+
+          **App desktop**: `.AppImage` e `.deb` no Linux, `-setup.exe` no Windows. O app abre o servidor em `http://localhost:7341`; para outra máquina, veja [Deploy e configuração](https://github.com/mindblow-org/mindblow/blob/main/docs/deploy.md#app-desktop).
+          EOF
+          gh release create "$TAG" --draft --target "$GITHUB_SHA" --title "mindblow $TAG" --notes-file notes.md --generate-notes
+
+  server:
+    name: servidor (${{ matrix.name }})
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x64, os: ubuntu-22.04, bin: mindblow, out: mindblow-linux-x64 }
+          - { name: linux-arm64, os: ubuntu-22.04-arm, bin: mindblow, out: mindblow-linux-arm64 }
+          - { name: windows-x64, os: windows-latest, bin: mindblow.exe, out: mindblow-windows-x64.exe }
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: web/pnpm-lock.yaml
+
+      - name: interface
+        working-directory: web
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: server-${{ matrix.name }}
+
+      - name: compilar
+        run: cargo build --release --locked -p server
+
+      - name: enviar
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          cp "target/release/${{ matrix.bin }}" "${{ matrix.out }}"
+          gh release upload "$TAG" "${{ matrix.out }}" --clobber
+
+  app:
+    name: app (${{ matrix.name }})
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { name: linux-x64, os: ubuntu-22.04, bundles: "appimage,deb" }
+          - { name: windows-x64, os: windows-latest, bundles: nsis }
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: dependências do WebKit
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: app-${{ matrix.name }}
+
+      - name: compilar
+        working-directory: app
+        run: npx --yes "$TAURI_CLI" build --ci --bundles ${{ matrix.bundles }}
+
+      - name: enviar
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: |
+          shopt -s nullglob
+          files=(target/release/bundle/appimage/*.AppImage target/release/bundle/deb/*.deb target/release/bundle/nsis/*-setup.exe)
+          [ ${#files[@]} -gt 0 ] || { echo "::error::nenhum instalador em target/release/bundle"; exit 1; }
+          gh release upload "$TAG" "${files[@]}" --clobber
+
+  publish:
+    name: publicar
+    needs: [prepare, server, app]
+    runs-on: ubuntu-latest
+    steps:
+      - name: publicar a release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ needs.prepare.outputs.tag }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest
