@@ -152,7 +152,8 @@
     if (!r.width) return void requestAnimationFrame(fit)
     const b = bounds(els)
     if (!b) return void (cam = { x: r.width / 2, y: r.height / 2, z: 1 })
-    const z = clamp(Math.min(1, (r.width - 160) / Math.max(b.w, 1), (r.height - 200) / Math.max(b.h, 1)))
+    const mx = Math.min(80, r.width * 0.06)
+    const z = clamp(Math.min(1, (r.width - mx * 2) / Math.max(b.w, 1), (r.height - 200) / Math.max(b.h, 1)))
     cam = { x: r.width / 2 - (b.x + b.w / 2) * z, y: r.height / 2 - (b.y + b.h / 2) * z, z }
   }
 
