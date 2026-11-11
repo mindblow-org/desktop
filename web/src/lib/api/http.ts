@@ -1,4 +1,4 @@
-import type { Draft, Item, Note, Patch } from '../notes/types'
+import type { Draft, Item, Link, Note, Patch } from '../notes/types'
 import { token } from './token'
 
 export class Locked extends Error {}
@@ -26,6 +26,7 @@ export interface Health {
   ok: boolean
   version: string
   link: string | null
+  node?: string
 }
 
 export const api = {
@@ -39,6 +40,9 @@ export const api = {
   pull: (id: string, item: string) => call<Note>('DELETE', `${at(id)}/items/${item}`),
   attach: (id: string, b: Blob, w: number, h: number) => call<Note>('POST', `${at(id)}/images?w=${w}&h=${h}`, b),
   detach: (id: string, img: string) => call<Note>('DELETE', `${at(id)}/images/${img}`),
+  links: () => call<Link[]>('GET', '/api/links'),
+  link: (url: string) => call<Link[]>('POST', '/api/links', { url }),
+  unlink: (url: string) => call<void>('DELETE', `/api/links?url=${encodeURIComponent(url)}`),
 }
 
 export function src(img: string) {

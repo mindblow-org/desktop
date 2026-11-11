@@ -86,7 +86,8 @@
   }
 
   hash()
-  ;(window as unknown as { mindblowBack: () => boolean }).mindblowBack = back
+  // O app Android chama mindblowBack no botão voltar e mindblowLink com o link de um QR lido pela câmera.
+  Object.assign(window, { mindblowBack: back, mindblowLink: (url: string) => store.link(url) })
 
   function key(e: KeyboardEvent) {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
