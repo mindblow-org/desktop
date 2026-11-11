@@ -15,6 +15,7 @@
     onclose,
     onhome,
     onpick,
+    onscan,
     onfind,
   }: {
     picking?: boolean
@@ -22,6 +23,7 @@
     onclose: (id: string) => void
     onhome: () => void
     onpick: (k: Kind) => void
+    onscan: () => void
     onfind: () => void
   } = $props()
   let connecting = $state(false)
@@ -70,6 +72,10 @@
         onpick={(k) => {
           picking = false
           onpick(k)
+        }}
+        onscan={() => {
+          picking = false
+          onscan()
         }}
         onclose={() => (picking = false)}
       />

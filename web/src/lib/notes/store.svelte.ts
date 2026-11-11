@@ -73,8 +73,8 @@ class Store {
     for (const f of this.#subs) f(e)
   }
 
-  async add(kind: Kind) {
-    const n = await api.add({ kind })
+  async add(kind: Kind, body?: string) {
+    const n = await api.add(body ? { kind, body } : { kind })
     this.take({ type: 'created', note: n })
     return n
   }
