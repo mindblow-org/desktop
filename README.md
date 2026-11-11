@@ -23,6 +23,8 @@ Por baixo: servidor em Rust (axum + SQLite), interface em Svelte 5 e app desktop
 
 Um quadro branco simples: caneta, formas, setas, texto e imagens. Dá para selecionar vários, redimensionar, girar, copiar e colar (inclusive imagem com Ctrl+V).
 
+**Escanear caderno** (no +) tira foto de uma folha e cria um board com o que está nela: o que foi escrito ou desenhado vira traço editável, caixas e círculos viram formas e a cor da caneta é mantida. No app Android, o scanner de documento recorta e endireita a folha antes.
+
 <p align="center">
   <img src="docs/images/board.png" alt="Board com um diagrama do sync: celular e notebook ligados ao servidor dentro da tailnet, com a caixa do servidor selecionada">
 </p>

@@ -47,6 +47,14 @@ As fixadas vêm primeiro e as outras depois. Dentro de cada grupo, vale o `rank:
 - A câmera (posição e zoom) não é salva. Ao abrir, o quadro enquadra o desenho.
 - Duas pessoas no mesmo board: vale a última escrita, com a cena inteira.
 
+### Escanear caderno
+
+- "Escanear caderno", no seletor do +, abre a câmera (`<input capture>`). No app Android, quem atende é o scanner de documento do Google Play Services, que já entrega a folha recortada e endireitada; no navegador vem a foto crua.
+- `web/src/lib/scan/ink.ts` transforma a foto em cena, sem servidor e sem modelo: recorta na folha (a maior área clara e sem cor, para tirar mesa e teclado), separa a tinta com limiar adaptativo, tira pauta e margem (linhas claras, finas e longas), afina a tinta até 1 pixel (Zhang-Suen), rastreia o esqueleto em traços e simplifica (Douglas-Peucker). Contorno fechado grande com cara de caixa ou de círculo vira `rect` ou `ellipse`, girado se for o caso; a cor da caneta vira a cor do board, descontada a cor do papel.
+- Letra continua letra de mão: vira traço, não texto, e não entra na busca.
+- Roda num worker (`scan/worker.ts`). A foto é reduzida para 1400px no lado maior; a folha ocupa 900 de largura no board e as folhas ficam uma embaixo da outra. Se a cena passar de 1 MB, o traço é simplificado mais.
+- O board nasce com a cena num `POST` só. A foto não é enviada.
+
 ## Banco
 
 `store` migra pelo `pragma user_version`. Cada arquivo em `crates/store/src/sql/` é um passo, aplicado uma vez dentro de uma transação. Bancos antigos sobem de versão sozinhos ao abrir.
@@ -80,6 +88,7 @@ web/src/lib/
   grid/     masonry por seções (Fixadas / Outras) e drag dentro da seção
   find/     paleta Ctrl+K e busca
   images/   reduzir, colar/soltar, galeria e visualizador
+  scan/     foto de folha de caderno vira cena do board
   tabs/     abas locais do dispositivo, seletor do +, estado do sync
   shell/    destacar janela e controles da janela (minimizar, maximizar, fechar): Tauri ou navegador, escolhido em runtime
   devices/  nome do aparelho e o popover de QR + dispositivos
