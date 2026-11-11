@@ -63,6 +63,31 @@
     open(id)
   }
 
+  // #new=<tipo> cria e abre uma nota; #open=<id> abre uma. Atalhos do PWA e do app Android.
+  function hash() {
+    const p = new URLSearchParams(location.hash.slice(1))
+    const k = p.get('new')
+    const id = p.get('open')
+    if (!k && !id) return
+    history.replaceState(null, '', location.pathname + location.search)
+    if (k && k in kinds) void pick(k as Kind)
+    else if (id) open(id)
+  }
+
+  // Botão voltar do app Android: faz o papel do Esc e diz se havia algo para fechar.
+  function back(): boolean {
+    if (finding) {
+      finding = false
+      return true
+    }
+    if (!tabs.on && !document.querySelector('[role="dialog"]')) return false
+    document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    return true
+  }
+
+  hash()
+  ;(window as unknown as { mindblowBack: () => boolean }).mindblowBack = back
+
   function key(e: KeyboardEvent) {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault()
@@ -86,7 +111,7 @@
   }
 </script>
 
-<svelte:window onkeydown={key} />
+<svelte:window onkeydown={key} onhashchange={hash} />
 
 <div class="app">
   <Bar bind:picking onopen={open} onclose={close} onhome={home} onpick={pick} onfind={() => (finding = true)} />

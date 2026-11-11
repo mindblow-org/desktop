@@ -12,4 +12,8 @@ describe('nome do aparelho', () => {
   it('no app Tauri vira app desktop', () => {
     expect(guess('qualquer', true)).toBe('App desktop')
   })
+
+  it('no app Android vira app Android', () => {
+    expect(guess('Mozilla/5.0 (Linux; Android 15; Pixel 9; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/149.0 Mobile Safari/537.36 mindblow-android/0.1.0', false)).toBe('App Android')
+  })
 })
