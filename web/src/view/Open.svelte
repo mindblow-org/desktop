@@ -66,16 +66,9 @@
       <s.Full {note} />
     </Catch>
   </div>
-  <footer>
-    <span class="esc"><span class="kbd">esc</span>volta ao grid</span>
-    {#if store.notice}
-      <span class="state notice">{store.notice}</span>
-    {:else}
-      <span class="state" class:off={!store.online}
-        ><i></i>{store.uploads.length ? 'enviando imagem…' : store.busy ? 'salvando…' : store.online ? 'salvo · sincronizado' : 'offline'}</span
-      >
-    {/if}
-  </footer>
+  {#if store.notice}
+    <footer>{store.notice}</footer>
+  {/if}
 </section>
 
 <style>
@@ -139,33 +132,10 @@
     left: 20px;
     right: 20px;
     bottom: 16px;
-    display: flex;
-    justify-content: space-between;
+    text-align: right;
     font: 11px var(--mono);
-    color: var(--faint);
-    pointer-events: none;
-  }
-
-  footer span {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .state i {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--ink);
-  }
-
-  .notice {
     color: var(--fg);
-  }
-
-  .state.off i {
-    background: none;
-    box-shadow: inset 0 0 0 1.5px var(--muted);
+    pointer-events: none;
   }
 
   @media (max-width: 640px) {
@@ -176,10 +146,6 @@
 
     .back {
       display: flex;
-    }
-
-    .esc {
-      visibility: hidden;
     }
 
     footer {

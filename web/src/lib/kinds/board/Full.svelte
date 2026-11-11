@@ -968,7 +968,7 @@
   @media (max-width: 960px) {
     .bar {
       top: auto;
-      bottom: 48px;
+      bottom: 16px;
     }
   }
 
@@ -978,7 +978,7 @@
     }
 
     .bar {
-      bottom: calc(40px + env(safe-area-inset-bottom));
+      bottom: calc(12px + env(safe-area-inset-bottom));
       gap: 1px;
     }
 

@@ -105,7 +105,6 @@
       {#each specs as s (s.kind)}
         <button class:on={only === s.kind} onclick={() => (only = only === s.kind ? null : s.kind)}>{s.label} <span>{count[s.kind]}</span></button>
       {/each}
-      {#if dims.w >= 212 && store.list.length > 1}<span class="hint">arraste para reorganizar</span>{/if}
     </nav>
 
     {#if store.ready && !shown.length}
@@ -209,10 +208,6 @@
   .filter span {
     font: 11px var(--mono);
     color: var(--faint);
-  }
-
-  .filter .hint {
-    margin-left: auto;
   }
 
   .empty {
@@ -403,10 +398,6 @@
     .filter {
       gap: 16px;
       overflow-x: auto;
-    }
-
-    .filter .hint {
-      display: none;
     }
   }
 </style>
