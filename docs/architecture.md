@@ -17,7 +17,8 @@ Um processo só, numa máquina, guarda tudo. Os dispositivos são clientes: o ap
 - `Kind` escolhe a `Rule` de cada tipo (Strategy):
   - sticky não tem título nem itens e aceita até 500 caracteres;
   - texto não tem itens;
-  - todo não tem corpo e não aceita item vazio.
+  - todo não tem corpo e não aceita item vazio;
+  - board não tem itens, e o corpo é a cena em JSON (`note::scene`).
 - `Notes` é o serviço de aplicação, com `add`, `edit`, `remove`, `push`, `mark` e `pull`. Cada escrita valida a nota, salva e publica um `Event`.
 - `Blobs` é a porta dos bytes das imagens. A nota guarda só os dados de cada imagem (`Image`: id, tipo, tamanho, largura e altura), e `Notes::attach`/`detach` cuidam dos dois lados. `remove` apaga também as imagens da nota.
 - `Repo` é a porta de persistência. `store::Sqlite` é a implementação, e os testes do domínio usam um repo em memória.
@@ -31,6 +32,19 @@ As fixadas vêm primeiro e as outras depois. Dentro de cada grupo, vale o `rank:
 
 - `domain::search` faz o `fold` (NFD sem marcas combinantes, em minúsculas) e o `hit`, que exige todos os termos no título, no corpo ou nos itens. A API usa isso em `?q=`.
 - A paleta (Ctrl+K) faz a mesma busca no cliente, sobre a lista que já está em memória, e responde instantâneo. `web/src/lib/find/match.ts` mantém o tamanho do texto no `fold`, para o destaque cair no lugar certo do original. O ranking põe o que bate no título antes do que bate no corpo; empate fica com a mais recente.
+
+## Board
+
+- A cena mora no `body` da nota, como JSON (formato em [API](api.md#cena-do-board)). Não tem tabela nem rota própria: sync, histórico do servidor e busca seguem o caminho das outras notas.
+- `web/src/lib/kinds/board/scene.ts` tem as funções puras: ler e gravar a cena, caixa de cada elemento (girada ou não), acerto do clique (pela borda nas formas, pela caixa no texto e na imagem), seleção por retângulo (só o que cabe inteiro), simplificação do traço, mover, girar, escalar, redimensionar pelo canto e clonar.
+- Rotação fica no elemento (`r`, em volta do centro da caixa sem giro). O clique desfaz o giro no ponto antes de testar, então a geometria de cada tipo continua simples. A seta não tem `r`: girar e escalar mexem direto nas pontas.
+- Redimensionar um elemento prende o canto oposto, inclusive girado. Formas e traço esticam livre; texto e imagem mantêm a proporção (no texto cresce a fonte `f`). Um grupo escala por igual e gira em volta do centro comum.
+- `Shapes` desenha a cena em SVG. O mesmo componente serve na miniatura do card (com `vector-effect: non-scaling-stroke`, para o traço não sumir quando a cena encolhe) e no quadro aberto. Seleção e alças são uma camada à parte, só no `Full`.
+- `Full` guarda só no fim do gesto: arrastar, desenhar, girar e redimensionar mexem numa cópia local, e a nota recebe uma edição por gesto. O desfazer é local, uma pilha com os `body` anteriores.
+- Imagens do board usam as imagens da nota (`Notes::attach`, tabela `blobs`); o elemento guarda só o id. Apagar a imagem da cena não apaga o arquivo na hora, para o desfazer funcionar. Ao fechar o board, a interface apaga as imagens que nenhum elemento usa mais.
+- Copiar e colar usam os eventos `copy`/`paste` do navegador (funcionam sem HTTPS). O conteúdo vai como JSON `{"mindblow":"board","els":[…]}` em texto. Colando em outro board, as imagens são baixadas e enviadas de novo para a nota de destino.
+- A câmera (posição e zoom) não é salva. Ao abrir, o quadro enquadra o desenho.
+- Duas pessoas no mesmo board: vale a última escrita, com a cena inteira.
 
 ## Banco
 
@@ -55,7 +69,7 @@ As fixadas vêm primeiro e as outras depois. Dentro de cada grupo, vale o `rank:
 web/src/lib/
   api/      fetch + WebSocket (Observer)
   notes/    tipos, store reativo, aplicar evento, rank
-  kinds/    um registro por tipo (Strategy): Card, Full, proporção, tamanho da janela, título
+  kinds/    um registro por tipo (Strategy): Card, Full, proporção, tamanho da janela, título, limite de imagens
   grid/     masonry por seções (Fixadas / Outras) e drag dentro da seção
   find/     paleta Ctrl+K e busca
   images/   reduzir, colar/soltar, galeria e visualizador

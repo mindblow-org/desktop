@@ -2,7 +2,7 @@
 
 Notas minimalistas que moram numa máquina só e aparecem em todos os seus dispositivos pela tailnet.
 
-Há três tipos de nota: **sticky**, **texto** e **todo**. Elas ficam num grid em que dá para arrastar os cards, abrem em abas e qualquer uma pode virar uma janela própria. Outros apps criam, mudam e tiram notas pela API.
+Há quatro tipos de nota: **sticky**, **texto**, **todo** e **board** (um quadro branco simples). Elas ficam num grid em que dá para arrastar os cards, abrem em abas e qualquer uma pode virar uma janela própria. Outros apps criam, mudam e tiram notas pela API.
 
 Por baixo: servidor em Rust (axum + SQLite), interface em Svelte 5 e app desktop em Tauri 2.
 

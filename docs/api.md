@@ -19,13 +19,40 @@ Base: `http://localhost:7341` ou o link da tailnet. JSON em tudo.
 }
 ```
 
-`kind` é `sticky`, `text` ou `todo`. Cada tipo aceita uma forma; o que fugir dela volta `422` com `{"error": "..."}`:
+`kind` é `sticky`, `text`, `todo` ou `board`. Cada tipo aceita uma forma; o que fugir dela volta `422` com `{"error": "..."}`:
 
 - **sticky**: só `body`, até 500 caracteres;
 - **text**: `title` e `body`;
-- **todo**: `title` e `items`.
+- **todo**: `title` e `items`;
+- **board**: `title` e `body` com a cena em JSON, até 1 MB.
 
-Todos os tipos aceitam imagens: texto e todo até 50, sticky uma só.
+Imagens: texto, todo e board aceitam até 50, sticky uma só.
+
+### Cena do board
+
+O `body` de um board vazio é `""`. Com desenho, é um JSON assim:
+
+```json
+{
+  "v": 1,
+  "els": [
+    { "id": "…", "t": "pen", "c": 0, "pts": [0, 0, 12, 8, 30, 10] },
+    { "id": "…", "t": "rect", "c": 2, "x": 0, "y": 0, "w": 160, "h": 90, "r": 0.3 },
+    { "id": "…", "t": "ellipse", "c": 3, "x": 200, "y": 0, "w": 120, "h": 90 },
+    { "id": "…", "t": "arrow", "c": 1, "x1": 170, "y1": 45, "x2": 300, "y2": 45 },
+    { "id": "…", "t": "text", "c": 0, "x": 20, "y": 30, "s": "fila de jobs", "f": 28 },
+    { "id": "…", "t": "image", "c": 0, "img": "0193…", "x": 0, "y": 120, "w": 320, "h": 200 }
+  ]
+}
+```
+
+- `c` é a cor: 0 é a cor do texto do tema, 1 a 4 são vermelho, azul, verde e âmbar.
+- `pts` é a lista plana `x, y, x, y…` do traço livre.
+- `r` é a rotação em radianos, em volta do centro do elemento. Vale para todos menos a seta, que gira pelas pontas. Sem `r`, é 0.
+- `f` é o tamanho da fonte do texto. Sem `f`, é 20.
+- `img` é o id de uma imagem da própria nota (`images`), enviada pela rota de imagens.
+- O servidor só confere que `els` é uma lista; o resto da forma é do cliente.
+- A busca (`?q=`) lê o título e os textos (`t: "text"`) da cena, não o JSON.
 
 ## Rotas
 
