@@ -42,6 +42,7 @@ As fixadas vêm primeiro e as outras depois. Dentro de cada grupo, vale o `rank:
 - `Shapes` desenha a cena em SVG. O mesmo componente serve na miniatura do card (com `vector-effect: non-scaling-stroke`, para o traço não sumir quando a cena encolhe) e no quadro aberto. Seleção e alças são uma camada à parte, só no `Full`.
 - `Full` guarda só no fim do gesto: arrastar, desenhar, girar e redimensionar mexem numa cópia local, e a nota recebe uma edição por gesto. O desfazer é local, uma pilha com os `body` anteriores.
 - Imagens do board usam as imagens da nota (`Notes::attach`, tabela `blobs`); o elemento guarda só o id. Apagar a imagem da cena não apaga o arquivo na hora, para o desfazer funcionar. Ao fechar o board, a interface apaga as imagens que nenhum elemento usa mais.
+- Excluir a seleção: tecla Delete/Backspace ou a lixeira da barra, que fica apagada sem seleção.
 - Copiar e colar usam os eventos `copy`/`paste` do navegador (funcionam sem HTTPS). O conteúdo vai como JSON `{"mindblow":"board","els":[…]}` em texto. Colando em outro board, as imagens são baixadas e enviadas de novo para a nota de destino.
 - A câmera (posição e zoom) não é salva. Ao abrir, o quadro enquadra o desenho.
 - Duas pessoas no mesmo board: vale a última escrita, com a cena inteira.
@@ -89,4 +90,7 @@ web/src/view/  Main (grid + abas), Open (nota aberta), Solo (janela destacada), 
 - O masonry põe cada nota na coluna mais baixa. Os cards são posicionados por `transform`, que anima sozinho ao reordenar.
 - Abrir uma nota usa View Transitions: o card cresce até a área toda. Onde a API não existe, a nota só aparece.
 - As abas ficam no `localStorage`, então cada dispositivo tem as suas.
+- No celular (até 640px) não há abas: abrir uma nota troca a que está aberta, e voltar ao grid fecha ela (`tabs.solo`). A volta é pelo `< Notas` da nota ou pelo botão voltar do app Android.
+- No celular também não há barra em cima: o `Bar` vira uma toolbar flutuante embaixo, no centro (QR, nova nota, busca), e some com uma nota aberta. Aí aparece a da nota (`Open`: imagem, fixar, excluir). No board a toolbar troca a imagem pelo botão de ferramentas, que liga e desliga a barra do board logo acima (`kit`); o voltar fecha a barra antes de sair do board. `--dock` é o espaço que a toolbar ocupa embaixo, e o grid, a nota e as folhas do `Picker` e do `Connect` respeitam ele.
+- Nota que sai vazia some (`Spec.empty`), mas imagem conta como conteúdo: a sticky só com foto, que o compartilhar do Android cria, fica.
 - No app Tauri as janelas não têm moldura do sistema. `Frame` põe minimizar, maximizar e fechar na barra de cima e no cabeçalho da janela destacada; as áreas vazias têm `data-tauri-drag-region`. No navegador, `Frame` não aparece.
