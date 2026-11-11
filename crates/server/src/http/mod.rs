@@ -7,7 +7,7 @@ mod ws;
 
 use axum::{
     Json, Router,
-    extract::DefaultBodyLimit,
+    extract::{DefaultBodyLimit, State},
     middleware,
     routing::{delete, get, patch, post},
 };
@@ -32,6 +32,6 @@ pub fn router(a: App) -> Router {
         .with_state(a)
 }
 
-async fn health() -> Json<Value> {
-    Json(json!({ "ok": true, "version": env!("CARGO_PKG_VERSION") }))
+async fn health(State(a): State<App>) -> Json<Value> {
+    Json(json!({ "ok": true, "version": env!("CARGO_PKG_VERSION"), "link": a.link.as_deref() }))
 }

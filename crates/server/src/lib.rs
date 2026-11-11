@@ -17,6 +17,7 @@ pub struct App {
     pub live: Arc<Live>,
     pub token: Option<Arc<str>>,
     pub hosts: Arc<[String]>,
+    pub link: Option<Arc<str>>,
 }
 
 impl App {
@@ -29,6 +30,7 @@ impl App {
             live,
             token: cfg.token.as_deref().map(Into::into),
             hosts: cfg.hosts.clone().into(),
+            link: cfg.link.as_deref().map(Into::into),
         }
     }
 }

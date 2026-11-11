@@ -12,6 +12,7 @@ pub struct Config {
     pub db: PathBuf,
     pub token: Option<String>,
     pub hosts: Vec<String>,
+    pub link: Option<String>,
 }
 
 impl Default for Config {
@@ -21,6 +22,7 @@ impl Default for Config {
             db: data().join("mindblow.db"),
             token: None,
             hosts: Vec::new(),
+            link: None,
         }
     }
 }
@@ -37,6 +39,7 @@ impl Config {
             hosts: var("MINDBLOW_HOSTS")
                 .map(|v| v.split(',').map(|h| h.trim().to_ascii_lowercase()).filter(|h| !h.is_empty()).collect())
                 .unwrap_or_default(),
+            link: var("MINDBLOW_LINK").ok().map(|v| v.trim().trim_end_matches('/').to_owned()).filter(|v| !v.is_empty()),
         }
     }
 }

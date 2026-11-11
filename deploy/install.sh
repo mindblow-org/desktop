@@ -26,25 +26,26 @@ say "Compilando o servidor"
 mkdir -p "$BIN"
 install -m 755 "$DIR/target/release/mindblow" "$BIN/mindblow"
 
-say "Serviço systemd"
-mkdir -p "$(dirname "$UNIT")"
-sed -e "s|@BIN@|$BIN/mindblow|" -e "s|@PORT@|$PORT|" "$DIR/deploy/mindblow.service" > "$UNIT"
-systemctl --user daemon-reload
-systemctl --user enable mindblow >/dev/null
-systemctl --user restart mindblow
-
 URL="http://localhost:$PORT"
+LINK=""
 if have tailscale; then
   say "Publicando na tailnet"
   if tailscale serve --bg --https="$PORT" "http://127.0.0.1:$PORT" >/dev/null 2>&1; then
     found="$(tailscale serve status 2>/dev/null | awk -v p=":$PORT" '/^https:\/\// && index($1, p) { print $1; exit }')"
-    [ -n "$found" ] && URL="$found"
+    [ -n "$found" ] && URL="$found" && LINK="$found"
   else
     warn "tailscale serve falhou. Se for permissão: sudo tailscale set --operator=\"$USER\""
   fi
 else
   warn "Tailscale não encontrado: só o acesso local vai funcionar."
 fi
+
+say "Serviço systemd"
+mkdir -p "$(dirname "$UNIT")"
+sed -e "s|@BIN@|$BIN/mindblow|" -e "s|@PORT@|$PORT|" -e "s|@LINK@|$LINK|" "$DIR/deploy/mindblow.service" > "$UNIT"
+systemctl --user daemon-reload
+systemctl --user enable mindblow >/dev/null
+systemctl --user restart mindblow
 
 say "Pronto"
 printf '    %s\n' "$URL"

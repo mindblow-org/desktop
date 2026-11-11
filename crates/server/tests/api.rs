@@ -1,6 +1,6 @@
 use std::{sync::Arc, time::Duration};
 
-use futures_util::StreamExt;
+use futures_util::{SinkExt, StreamExt};
 use reqwest::{Client, Method as M, StatusCode, header};
 use serde_json::{Value, json};
 use server::{App, Config, router};
@@ -125,6 +125,35 @@ async fn peers_count_devices_not_windows() {
 
     let _phone = s.ws("d=celular").await;
     assert_eq!(next(&mut pc, "peers").await["count"], 2);
+}
+
+#[tokio::test]
+async fn devices_show_up_by_name() {
+    let s = Srv::up(None).await;
+    let mut pc = s.ws("d=pc&n=Notebook").await;
+    next(&mut pc, "peers").await;
+
+    let mut phone = s.ws("d=celular&n=iPhone%20%C2%B7%20Safari").await;
+    let p = next(&mut pc, "peers").await;
+    let names: Vec<_> = p["list"].as_array().unwrap().iter().map(|d| d["name"].as_str().unwrap().to_owned()).collect();
+    assert_eq!(names, ["Notebook", "iPhone · Safari"]);
+
+    phone.send(Message::Text(r#"{"type":"name","name":"  Celular  "}"#.into())).await.unwrap();
+    let p = next(&mut pc, "peers").await;
+    assert_eq!(p["list"][1]["id"], "celular");
+    assert_eq!(p["list"][1]["name"], "Celular");
+}
+
+#[tokio::test]
+async fn health_tells_the_tailnet_link() {
+    let cfg = Config { link: Some("https://pc.tail1234.ts.net:7341".into()), ..Config::default() };
+    let db = Arc::new(Sqlite::memory().unwrap());
+    let l = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let port = l.local_addr().unwrap().port();
+    tokio::spawn(async move { axum::serve(l, router(App::new(db.clone(), db, &cfg))).await.unwrap() });
+
+    let h: Value = reqwest::get(format!("http://127.0.0.1:{port}/api/health")).await.unwrap().json().await.unwrap();
+    assert_eq!(h["link"], "https://pc.tail1234.ts.net:7341");
 }
 
 #[tokio::test]

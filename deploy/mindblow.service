@@ -5,6 +5,7 @@ After=network-online.target
 [Service]
 ExecStart=@BIN@
 Environment=MINDBLOW_PORT=@PORT@
+Environment=MINDBLOW_LINK=@LINK@
 Restart=on-failure
 RestartSec=2
 
