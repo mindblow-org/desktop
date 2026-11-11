@@ -6,6 +6,8 @@
 
 <p align="center">Notas minimalistas que moram numa máquina só e aparecem em todos os seus dispositivos pela tailnet.</p>
 
+<p align="center"><a href="https://mindblow-org.github.io/site/">Site</a> · <a href="https://github.com/mindblow-org/mindblow/releases/latest">Baixar</a></p>
+
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="docs/images/grid-dark.png">
