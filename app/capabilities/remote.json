@@ -1,0 +1,17 @@
+{
+  "identifier": "remote",
+  "description": "API do Tauri para a interface servida pelo mindblow",
+  "windows": ["main", "n-*"],
+  "remote": {
+    "urls": ["http://localhost:*", "http://127.0.0.1:*", "https://*.ts.net", "https://*.ts.net:*"]
+  },
+  "permissions": [
+    "core:default",
+    "core:webview:allow-create-webview-window",
+    "core:window:allow-set-always-on-top",
+    "core:window:allow-close",
+    "core:window:allow-set-focus",
+    "core:event:allow-emit-to",
+    "core:event:allow-listen"
+  ]
+}

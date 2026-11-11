@@ -1,0 +1,7 @@
+target/
+node_modules/
+web/dist/
+app/gen/
+*.db
+*.db-wal
+*.db-shm
