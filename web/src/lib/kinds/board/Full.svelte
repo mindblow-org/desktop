@@ -40,7 +40,7 @@
   } from './scene'
   import Shapes, { tones } from './Shapes.svelte'
 
-  let { note, solo = false }: { note: Note; solo?: boolean } = $props()
+  let { note, solo = false, kit = false }: { note: Note; solo?: boolean; kit?: boolean } = $props()
 
   const tools: { t: Tool; icon: Name; key: string; label: string }[] = [
     { t: 'select', icon: 'cursor', key: 'v', label: 'Selecionar' },
@@ -709,7 +709,10 @@
   {/if}
 
   {#if !shown.length && !editing}
-    <p class="hint">desenhe, cole (ctrl + v) ou solte uma imagem · espaço + arrastar move a vista · ctrl + roda dá zoom</p>
+    <p class="hint">
+      <span class="wide">desenhe, cole (ctrl + v) ou solte uma imagem · espaço + arrastar move a vista · ctrl + roda dá zoom</span>
+      <span class="narrow">toque no lápis aí embaixo para desenhar · dois dedos movem e dão zoom</span>
+    </p>
   {/if}
 
   {#if depth}
@@ -730,7 +733,7 @@
     {/if}
   </header>
 
-  <div class="bar" class:open={palette} role="toolbar" aria-label="Ferramentas do board">
+  <div class="bar" class:open={palette} class:kit role="toolbar" aria-label="Ferramentas do board">
     {#each tools as t (t.t)}
       <button
         class="ib {t.t}"
@@ -850,6 +853,10 @@
     font: 11.5px var(--mono);
     color: var(--faint);
     pointer-events: none;
+  }
+
+  .hint .narrow {
+    display: none;
   }
 
   .drop {
@@ -982,6 +989,24 @@
     .bar {
       bottom: calc(12px + env(safe-area-inset-bottom));
       gap: 1px;
+    }
+
+    /* No celular a dica fala de toque, e não de teclado e mouse. */
+    .board:not(.solo) .hint .wide {
+      display: none;
+    }
+
+    .board:not(.solo) .hint .narrow {
+      display: inline;
+    }
+
+    /* Na tela principal a barra fica acima da toolbar da nota e só aparece quando o botão de ferramentas está ligado. */
+    .board:not(.solo) .bar {
+      bottom: calc(var(--dock) + 10px + env(safe-area-inset-bottom));
+    }
+
+    .board:not(.solo) .bar:not(.kit) {
+      display: none;
     }
 
     .bar .ib {

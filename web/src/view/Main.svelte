@@ -153,4 +153,11 @@
     inset: 0;
     overflow: auto;
   }
+
+  /* Sem a barra de cima no celular, o recuo da barra de status passa para cá. */
+  @media (max-width: 640px) {
+    .app {
+      padding-top: env(safe-area-inset-top);
+    }
+  }
 </style>

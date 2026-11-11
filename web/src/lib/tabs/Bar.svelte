@@ -27,7 +27,7 @@
   let connecting = $state(false)
 </script>
 
-<header class="bar" data-tauri-drag-region>
+<header class="bar" class:away={!!tabs.on} data-tauri-drag-region>
   <div class="brand" data-tauri-drag-region><span class="mark" data-tauri-drag-region></span>mindblow</div>
   <nav class="tabs">
     <button class="tab home" class:on={!tabs.on} onclick={onhome}>
@@ -76,7 +76,7 @@
     {/if}
   </div>
   <button class="find" aria-label="Buscar notas" title="Buscar notas" onclick={onfind}>
-    <Icon name="search" size={14} />
+    <Icon name="search" size={18} />
   </button>
   <div class="qrw">
     <button class="qrb" class:on={connecting} aria-label="Conectar outro aparelho" title="Conectar outro aparelho" onclick={() => (connecting = !connecting)}>
@@ -266,71 +266,73 @@
     box-shadow: 0 0 0 1px var(--line);
   }
 
+  /* No celular a barra vira uma toolbar flutuante embaixo, no centro: QR, nova nota e busca. Com uma nota aberta, quem aparece é a da nota. Centraliza sem transform, que prenderia o Picker e o Connect (fixed) dentro dela. */
   @media (max-width: 640px) {
     .bar {
-      flex-wrap: wrap;
-      height: auto;
-      padding: env(safe-area-inset-top) 14px 0 18px;
-      row-gap: 0;
-    }
-
-    .brand {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: calc(16px + env(safe-area-inset-bottom));
+      width: fit-content;
       height: 48px;
-      order: 0;
+      margin: 0 auto;
+      padding: 0 4px;
+      gap: 2px;
+      border-radius: 999px;
+      background: var(--ink);
+      box-shadow: var(--shadow-pop);
     }
 
-    .find {
-      order: 1;
-      display: grid;
-      place-items: center;
-      width: 34px;
-      height: 34px;
-      margin-left: auto;
-      padding: 0;
-      border: 0;
-      border-radius: 999px;
-      background: none;
-      box-shadow: inset 0 0 0 1px var(--line);
-      color: var(--muted);
-      cursor: pointer;
+    .bar.away,
+    .brand,
+    .tabs,
+    .bar > :global(.frame) {
+      display: none;
     }
 
     .qrw {
-      order: 1;
-      margin: 0 8px;
-    }
-
-    .qrb {
-      width: 34px;
-      height: 34px;
-      box-shadow: inset 0 0 0 1px var(--line);
-    }
-
-    .bar > :global(.frame) {
-      order: 2;
+      order: 0;
+      margin: 0;
     }
 
     .addw {
+      order: 1;
+      margin: 0;
+    }
+
+    .find {
       order: 2;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
+      cursor: pointer;
     }
 
-    .add {
-      width: 34px;
-      height: 34px;
-      background: var(--paper);
-      box-shadow: 0 0 0 1px var(--line);
-      color: var(--fg);
+    .qrb,
+    .add,
+    .find {
+      width: 48px;
+      height: 40px;
+      border-radius: 999px;
+      background: none;
+      box-shadow: none;
+      color: var(--on-ink);
     }
 
-    .tabs {
-      order: 3;
-      flex-basis: 100%;
-      margin: 0 -14px 0 -4px;
-      padding: 2px 14px 10px 0;
+    .qrb:hover,
+    .qrb.on,
+    .add:hover,
+    .add.on,
+    .find:hover {
+      background: color-mix(in srgb, var(--on-ink) 16%, transparent);
+      box-shadow: none;
+      color: var(--on-ink);
     }
 
-    .tab {
-      height: 32px;
+    .bar :global(svg) {
+      width: 19px;
+      height: 19px;
     }
   }
 </style>

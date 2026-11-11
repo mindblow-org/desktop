@@ -11,7 +11,8 @@ export interface Spec {
   win: [number, number]
   images: number
   Card: Component<{ note: Note }>
-  Full: Component<{ note: Note; solo?: boolean }>
+  // kit: no celular, se a barra de ferramentas do board está aberta. Os outros tipos ignoram.
+  Full: Component<{ note: Note; solo?: boolean; kit?: boolean }>
   empty(n: Note): boolean
   title(n: Note): string
 }
