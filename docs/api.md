@@ -70,7 +70,7 @@ O `body` de um board vazio é `""`. Com desenho, é um JSON assim:
 | DELETE | `/api/notes/{id}/images/{img}` | | nota |
 | GET | `/api/images/{img}` | | bytes, com cache imutável |
 | GET | `/api/live` | WebSocket | eventos |
-| GET | `/api/health` | | `{ok, version}` |
+| GET | `/api/health` | | `{ok, version, link}` |
 
 A ordem da lista põe as fixadas (`pinned: true`) primeiro e depois segue o `rank`.
 
@@ -86,11 +86,13 @@ Notas e itens aceitam o `id` vindo de quem cria. Se não vier, o servidor gera u
 { "type": "created", "note": { … } }
 { "type": "updated", "note": { … } }
 { "type": "deleted", "id": "…" }
-{ "type": "peers", "count": 3 }
+{ "type": "peers", "count": 2, "list": [{ "id": "…", "name": "Notebook", "since": 1794413817178 }, { "id": "…", "name": "iPhone · Safari", "since": 1794413900000 }] }
 { "type": "resync" }
 ```
 
 - `?d=<id do dispositivo>` faz várias janelas do mesmo aparelho contarem como um só em `peers`.
+- `?n=<nome>` dá nome ao aparelho na lista (até 40 caracteres). Para renomear sem reconectar, o cliente manda `{"type":"name","name":"Celular"}` pelo próprio WebSocket, e todos recebem um `peers` novo.
+- `list` vem em ordem de chegada; `since` é quando o aparelho conectou.
 - `resync` avisa que o cliente perdeu eventos e precisa recarregar a lista.
 
 ## Acesso
@@ -98,6 +100,8 @@ Notas e itens aceitam o `id` vindo de quem cria. Se não vier, o servidor gera u
 - O servidor só escuta em `127.0.0.1`, e a tailnet chega até ele pelo `tailscale serve`.
 - Só passam os Hosts `localhost`, `*.ts.net`, nomes curtos do MagicDNS e o que estiver em `MINDBLOW_HOSTS`. Requisição com `Origin` de outro site é recusada.
 - Com `MINDBLOW_TOKEN` definido, toda `/api/*` exige `Authorization: Bearer <token>`. No WebSocket e no `<img>` de `/api/images`, o token vai em `?token=`.
+- A interface aceita o token no fim do link, em `#token=<token>`: guarda no aparelho e tira do endereço. É o que o QR de "conectar outro aparelho" usa. O `#` não vai para o servidor nem para os logs, mas quem vir o QR na tela consegue entrar.
+- `link` do `/api/health` é o link da tailnet (`MINDBLOW_LINK`), para o QR funcionar quando a página foi aberta por `localhost`.
 
 ## Exemplos
 

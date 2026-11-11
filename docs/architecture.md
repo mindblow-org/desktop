@@ -63,6 +63,12 @@ As fixadas vêm primeiro e as outras depois. Dentro de cada grupo, vale o `rank:
 - O cliente aplica a edição na hora (otimista) e manda um PATCH com debounce de 300 ms. Enquanto há edição pendente, ela fica por cima do que chega do servidor.
 - Ao reconectar, o cliente recarrega a lista. Se ficou para trás no canal, o servidor manda `resync`.
 
+## Dispositivos
+
+- `Live` guarda cada aparelho conectado (id, nome, desde quando) e conta janelas do mesmo aparelho como um só. Cada entrada, saída ou troca de nome manda `peers` com a contagem e a lista.
+- O nome vem do cliente: o que a pessoa escreveu (no `localStorage`) ou um palpite pelo navegador (`web/src/lib/devices/name.ts`: "Linux · Chrome", "iPhone · Safari", "App desktop").
+- "Conectar outro aparelho" (`Connect.svelte`) gera o QR no navegador com `uqr`. O link é o endereço da página, ou o `link` do `/api/health` quando a página foi aberta por `localhost`. Com token, ele vai no `#token=` do link.
+
 ## Interface
 
 ```
@@ -74,7 +80,8 @@ web/src/lib/
   find/     paleta Ctrl+K e busca
   images/   reduzir, colar/soltar, galeria e visualizador
   tabs/     abas locais do dispositivo, seletor do +, estado do sync
-  shell/    destacar janela: Tauri (WebviewWindow) ou navegador (popup), escolhido em runtime
+  shell/    destacar janela e controles da janela (minimizar, maximizar, fechar): Tauri ou navegador, escolhido em runtime
+  devices/  nome do aparelho e o popover de QR + dispositivos
   ui/       ícones, movimento, tempo relativo
 web/src/view/  Main (grid + abas), Open (nota aberta), Solo (janela destacada), Lock (token)
 ```
@@ -82,3 +89,4 @@ web/src/view/  Main (grid + abas), Open (nota aberta), Solo (janela destacada), 
 - O masonry põe cada nota na coluna mais baixa. Os cards são posicionados por `transform`, que anima sozinho ao reordenar.
 - Abrir uma nota usa View Transitions: o card cresce até a área toda. Onde a API não existe, a nota só aparece.
 - As abas ficam no `localStorage`, então cada dispositivo tem as suas.
+- No app Tauri as janelas não têm moldura do sistema. `Frame` põe minimizar, maximizar e fechar na barra de cima e no cabeçalho da janela destacada; as áreas vazias têm `data-tauri-drag-region`. No navegador, `Frame` não aparece.

@@ -26,6 +26,7 @@ Antes, ligue no Tailscale **MagicDNS** e **HTTPS Certificates**. Se o `tailscale
 | `MINDBLOW_DB` | `~/.local/share/mindblow/mindblow.db` | banco SQLite |
 | `MINDBLOW_TOKEN` | vazio | exige token na API |
 | `MINDBLOW_HOSTS` | vazio | Hosts extras aceitos, separados por vírgula |
+| `MINDBLOW_LINK` | link da tailnet, gravado pelo `install.sh` | link que o QR de "conectar outro aparelho" mostra |
 
 No serviço: `systemctl --user edit mindblow` e uma linha `Environment=MINDBLOW_TOKEN=...` em `[Service]`.
 
@@ -34,6 +35,8 @@ Logs: `journalctl --user -u mindblow -f`.
 ## App desktop
 
 O app é só uma janela que carrega o servidor. Por padrão ele abre `http://localhost:7341`. Para outra máquina, defina `MINDBLOW_URL` ou escreva a URL em `~/.config/mindblow/url`.
+
+A janela não tem moldura do sistema: minimizar, maximizar e fechar ficam no canto direito da barra do app, e a área vazia da barra arrasta a janela (dois cliques maximizam). Em gerenciadores lado a lado, como o Hyprland, minimizar pode não fazer nada e arrastar só vale com a janela flutuando.
 
 ```sh
 cargo run -p mindblow-app --release
