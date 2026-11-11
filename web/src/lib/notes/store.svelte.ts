@@ -19,6 +19,8 @@ class Store {
   peers = $state(0)
   devices = $state<Peer[]>([])
   links = $state<Link[]>([])
+  /** Por que o último link não ligou (colado ou lido pelo QR do app Android). */
+  wrong = $state('')
   online = $state(false)
   ready = $state(false)
   locked = $state(false)
@@ -124,14 +126,16 @@ class Store {
     void this.#run(api.detach(id, img))
   }
 
-  /** Passa a sincronizar com outro mindblow (o link do QR dele, com ou sem `#token=`). Devolve o erro, se houver. */
-  async link(url: string): Promise<string | null> {
+  /** Passa a sincronizar com outro mindblow (o link do QR dele, com ou sem `#token=`). Diz se ligou. */
+  async link(url: string) {
+    this.wrong = ''
     try {
       this.links = await api.link(url)
-      return null
+      return true
     } catch (e) {
       if (e instanceof Locked) this.locked = true
-      return e instanceof Error && e.message ? e.message : 'não deu para ligar esse link'
+      this.wrong = e instanceof Error && e.message ? e.message : 'não deu para ligar esse link'
+      return false
     }
   }
 

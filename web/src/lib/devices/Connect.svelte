@@ -19,7 +19,6 @@
   let naming = $state(false)
   let draft = $state('')
   let paste = $state('')
-  let wrong = $state('')
   let sending = $state(false)
   const me = device()
   const secret = token.get()
@@ -111,9 +110,8 @@
     e.preventDefault()
     if (!paste.trim() || sending) return
     sending = true
-    wrong = (await store.link(paste)) ?? ''
+    if (await store.link(paste)) paste = ''
     sending = false
-    if (!wrong) paste = ''
   }
 
   function says(l: Link): string {
@@ -169,13 +167,13 @@
     {/each}
   </ul>
   <form class="join" onsubmit={add}>
-    <input bind:value={paste} placeholder="link de outro mindblow" aria-label="Link de outro mindblow" autocomplete="off" autocapitalize="off" spellcheck="false" oninput={() => (wrong = '')} />
+    <input bind:value={paste} placeholder="link de outro mindblow" aria-label="Link de outro mindblow" autocomplete="off" autocapitalize="off" spellcheck="false" oninput={() => (store.wrong = '')} />
     {#if scanner}
       <button type="button" class="ib" title="Ler QR" aria-label="Ler QR" onclick={() => scanner.scan()}><Icon name="qr" size={14} /></button>
     {/if}
     <button class="go" disabled={!paste.trim() || sending}>ligar</button>
   </form>
-  {#if wrong}<p class="note bad">{wrong}</p>{/if}
+  {#if store.wrong}<p class="note bad">{store.wrong}</p>{/if}
 
   <div class="head devs">
     <span>dispositivos conectados</span>
