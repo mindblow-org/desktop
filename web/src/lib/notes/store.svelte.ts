@@ -1,9 +1,10 @@
 import { api, Locked } from '../api/http'
 import { Live } from '../api/live'
+import { name } from '../devices/name'
 import { shrink } from '../images/shrink'
 import { device, uid } from '../local'
 import { apply, sort } from './apply'
-import type { Event, Image, Item, Kind, Note, Patch } from './types'
+import type { Event, Image, Item, Kind, Note, Patch, Peer } from './types'
 
 const DELAY = 300
 
@@ -16,6 +17,7 @@ export interface Upload {
 class Store {
   list = $state<Note[]>([])
   peers = $state(0)
+  devices = $state<Peer[]>([])
   online = $state(false)
   ready = $state(false)
   locked = $state(false)
@@ -25,7 +27,7 @@ class Store {
   sorted = $derived(sort(this.list))
   #wait = new Map<string, { p: Patch; t: ReturnType<typeof setTimeout> }>()
   #subs = new Set<(e: Event) => void>()
-  #live = new Live(device())
+  #live = new Live(device(), name.get)
 
   start() {
     this.#live.on((e) => this.take(e))
@@ -52,8 +54,10 @@ class Store {
   }
 
   take(e: Event) {
-    if (e.type === 'peers') this.peers = e.count
-    else if (e.type === 'resync') void this.load()
+    if (e.type === 'peers') {
+      this.peers = e.count
+      this.devices = e.list ?? []
+    } else if (e.type === 'resync') void this.load()
     else if (e.type === 'deleted') this.list = apply(this.list, e)
     else this.list = apply(this.list, { ...e, note: this.#over(e.note) })
     for (const f of this.#subs) f(e)
@@ -110,6 +114,11 @@ class Store {
   detach(id: string, img: string) {
     this.#set(id, (n) => ({ ...n, images: n.images.filter((i) => i.id !== img) }))
     void this.#run(api.detach(id, img))
+  }
+
+  rename(v: string) {
+    name.set(v)
+    this.#live.say(name.get())
   }
 
   say(s: string) {

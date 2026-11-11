@@ -36,9 +36,15 @@ export interface Draft {
   items?: Partial<Item>[]
 }
 
+export interface Peer {
+  id: string
+  name: string
+  since: number
+}
+
 export type Event =
   | { type: 'created'; note: Note }
   | { type: 'updated'; note: Note }
   | { type: 'deleted'; id: string }
-  | { type: 'peers'; count: number }
+  | { type: 'peers'; count: number; list?: Peer[] }
   | { type: 'resync' }

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Connect from '../devices/Connect.svelte'
   import { kinds } from '../kinds'
   import { store } from '../notes/store.svelte'
   import type { Kind } from '../notes/types'
@@ -6,7 +7,6 @@
   import { grow } from '../ui/motion.svelte'
   import Picker from './Picker.svelte'
   import { tabs } from './store.svelte'
-  import Sync from './Sync.svelte'
 
   let {
     picking = $bindable(false),
@@ -23,10 +23,11 @@
     onpick: (k: Kind) => void
     onfind: () => void
   } = $props()
+  let connecting = $state(false)
 </script>
 
-<header class="bar">
-  <div class="brand"><span class="mark"></span>mindblow</div>
+<header class="bar" data-tauri-drag-region>
+  <div class="brand" data-tauri-drag-region><span class="mark" data-tauri-drag-region></span>mindblow</div>
   <nav class="tabs">
     <button class="tab home" class:on={!tabs.on} onclick={onhome}>
       <Icon name="grid" size={14} /><span class="t">Notas</span><span class="n">{store.list.length}</span>
@@ -76,7 +77,12 @@
   <button class="find" aria-label="Buscar notas" title="Buscar notas" onclick={onfind}>
     <Icon name="search" size={14} />
   </button>
-  <Sync />
+  <div class="qrw">
+    <button class="qrb" class:on={connecting} aria-label="Conectar outro aparelho" title="Conectar outro aparelho" onclick={() => (connecting = !connecting)}>
+      <Icon name="qr" size={15} />
+    </button>
+    {#if connecting}<Connect onclose={() => (connecting = false)} />{/if}
+  </div>
 </header>
 
 <style>
@@ -229,9 +235,33 @@
     display: none;
   }
 
-  .bar > :global(.sync) {
+  .qrw {
+    position: relative;
+    flex: none;
     margin-left: auto;
-    padding-left: 16px;
+  }
+
+  .qrb {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    color: var(--muted);
+    cursor: pointer;
+    transition:
+      background 120ms,
+      color 120ms;
+  }
+
+  .qrb:hover,
+  .qrb.on {
+    background: var(--paper);
+    color: var(--fg);
+    box-shadow: 0 0 0 1px var(--line);
   }
 
   @media (max-width: 640px) {
@@ -263,10 +293,15 @@
       cursor: pointer;
     }
 
-    .bar > :global(.sync) {
+    .qrw {
       order: 1;
-      margin-left: 0;
-      padding: 0 12px;
+      margin: 0 8px;
+    }
+
+    .qrb {
+      width: 34px;
+      height: 34px;
+      box-shadow: inset 0 0 0 1px var(--line);
     }
 
     .addw {

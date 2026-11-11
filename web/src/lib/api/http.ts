@@ -22,7 +22,14 @@ async function call<T>(method: string, path: string, body?: unknown): Promise<T>
 
 const at = (id: string) => `/api/notes/${id}`
 
+export interface Health {
+  ok: boolean
+  version: string
+  link: string | null
+}
+
 export const api = {
+  health: () => call<Health>('GET', '/api/health'),
   list: () => call<Note[]>('GET', '/api/notes'),
   add: (d: Draft) => call<Note>('POST', '/api/notes', d),
   edit: (id: string, p: Patch) => call<Note>('PATCH', at(id), p),
