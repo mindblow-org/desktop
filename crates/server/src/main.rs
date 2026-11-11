@@ -1,17 +1,15 @@
-use std::{process::exit, sync::Arc};
+use std::process::exit;
 
-use server::{App, Config, router};
-use store::Sqlite;
+use server::{App, Config, serve};
 use tokio::{net::TcpListener, signal};
 
 #[tokio::main]
 async fn main() {
     let cfg = Config::env();
-    let db = Arc::new(Sqlite::open(&cfg.db).unwrap_or_else(|e| die(e)));
-    let app = App::new(db.clone(), db, &cfg);
+    let app = App::open(&cfg).unwrap_or_else(|e| die(e));
     let l = TcpListener::bind(cfg.addr).await.unwrap_or_else(|e| die(e));
     eprintln!("mindblow em http://{} · {}", cfg.addr, cfg.db.display());
-    if let Err(e) = axum::serve(l, router(app)).with_graceful_shutdown(stop()).await {
+    if let Err(e) = serve(app, &cfg, l, stop()).await {
         die(e);
     }
 }

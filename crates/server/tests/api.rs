@@ -19,7 +19,7 @@ impl Srv {
     async fn up(token: Option<&str>) -> Self {
         let cfg = Config { token: token.map(Into::into), ..Config::default() };
         let db = Arc::new(Sqlite::memory().unwrap());
-        let app = App::new(db.clone(), db, &cfg);
+        let app = App::new(db.clone(), db.clone(), db, &cfg).unwrap();
         let l = TcpListener::bind("127.0.0.1:0").await.unwrap();
         let port = l.local_addr().unwrap().port();
         tokio::spawn(async move { axum::serve(l, router(app)).await.unwrap() });
@@ -150,7 +150,7 @@ async fn health_tells_the_tailnet_link() {
     let db = Arc::new(Sqlite::memory().unwrap());
     let l = TcpListener::bind("127.0.0.1:0").await.unwrap();
     let port = l.local_addr().unwrap().port();
-    tokio::spawn(async move { axum::serve(l, router(App::new(db.clone(), db, &cfg))).await.unwrap() });
+    tokio::spawn(async move { axum::serve(l, router(App::new(db.clone(), db.clone(), db, &cfg).unwrap())).await.unwrap() });
 
     let h: Value = reqwest::get(format!("http://127.0.0.1:{port}/api/health")).await.unwrap().json().await.unwrap();
     assert_eq!(h["link"], "https://pc.tail1234.ts.net:7341");

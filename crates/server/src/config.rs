@@ -13,6 +13,8 @@ pub struct Config {
     pub token: Option<String>,
     pub hosts: Vec<String>,
     pub link: Option<String>,
+    /// Outro aparelho para sincronizar desde a partida (o link do QR, com ou sem `#token=`).
+    pub peer: Option<String>,
 }
 
 impl Default for Config {
@@ -23,6 +25,7 @@ impl Default for Config {
             token: None,
             hosts: Vec::new(),
             link: None,
+            peer: None,
         }
     }
 }
@@ -40,6 +43,7 @@ impl Config {
                 .map(|v| v.split(',').map(|h| h.trim().to_ascii_lowercase()).filter(|h| !h.is_empty()).collect())
                 .unwrap_or_default(),
             link: var("MINDBLOW_LINK").ok().map(|v| v.trim().trim_end_matches('/').to_owned()).filter(|v| !v.is_empty()),
+            peer: var("MINDBLOW_PEER").ok().filter(|v| !v.trim().is_empty()),
         }
     }
 }
