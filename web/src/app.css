@@ -2,6 +2,12 @@
   --bg: #f2f2f0;
   --paper: #ffffff;
   --sticky: #e4e4e1;
+  --sticky-yellow: #f4e8b4;
+  --sticky-peach: #f6dac6;
+  --sticky-pink: #f3d4dd;
+  --sticky-lilac: #dfd8f1;
+  --sticky-sky: #cfe2f1;
+  --sticky-mint: #cfe8d8;
   --hover: #e9e9e6;
   --line: #e1e1dd;
   --line-strong: #c9c9c4;
@@ -34,6 +40,12 @@
     --bg: #0e0e0e;
     --paper: #181818;
     --sticky: #262626;
+    --sticky-yellow: #38331f;
+    --sticky-peach: #3a2b22;
+    --sticky-pink: #39252c;
+    --sticky-lilac: #2c283b;
+    --sticky-sky: #1f2e3a;
+    --sticky-mint: #1f3227;
     --hover: #1f1f1f;
     --line: #252525;
     --line-strong: #363636;
@@ -56,6 +68,30 @@
 
 * {
   box-sizing: border-box;
+}
+
+[data-color='yellow'] {
+  --sticky: var(--sticky-yellow);
+}
+
+[data-color='peach'] {
+  --sticky: var(--sticky-peach);
+}
+
+[data-color='pink'] {
+  --sticky: var(--sticky-pink);
+}
+
+[data-color='lilac'] {
+  --sticky: var(--sticky-lilac);
+}
+
+[data-color='sky'] {
+  --sticky: var(--sticky-sky);
+}
+
+[data-color='mint'] {
+  --sticky: var(--sticky-mint);
 }
 
 html,

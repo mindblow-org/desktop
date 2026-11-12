@@ -130,6 +130,7 @@
         <div
           class="card {n.kind}"
           class:lift={lifted}
+          data-color={n.color || null}
           style:width="{dims.w}px"
           style:height="{b.h}px"
           style:transform={lifted ? `translate(${drag!.x}px, ${drag!.y}px)` : `translate(${b.x}px, ${b.y}px)`}
