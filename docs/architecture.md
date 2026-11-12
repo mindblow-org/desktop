@@ -120,6 +120,7 @@ web/src/view/  Main (grid + abas), Open (nota aberta), Solo (janela destacada), 
 - O masonry põe cada nota na coluna mais baixa. Os cards são posicionados por `transform`, que anima sozinho ao reordenar.
 - Abrir uma nota usa View Transitions: o card cresce até a área toda. Onde a API não existe, a nota só aparece.
 - As abas ficam no `localStorage`, então cada dispositivo tem as suas.
+- Arrastar uma aba de lado muda a ordem, e as outras abrem espaço. Puxar a aba para baixo da barra (48px) ou para fora da janela e soltar destaca a nota em janela, com o canto perto de onde ela foi solta (`shell.detach(n, at)`; no Wayland, quem decide a posição é o compositor). `tabs/tabs.ts` tem as funções puras: `move` e `spot`, que acha onde a aba cai.
 - No celular (até 640px) não há abas: abrir uma nota troca a que está aberta, e voltar ao grid fecha ela (`tabs.solo`). A volta é pelo `< Notas` da nota ou pelo botão voltar do app Android.
 - No celular também não há barra em cima: o `Bar` vira uma toolbar flutuante embaixo, no centro (QR, nova nota, busca), e some com uma nota aberta. Aí aparece a da nota (`Open`: imagem, fixar, excluir). No board a toolbar troca a imagem pelo botão de ferramentas, que liga e desliga a barra do board logo acima (`kit`); o voltar fecha a barra antes de sair do board. `--dock` é o espaço que a toolbar ocupa embaixo, e o grid, a nota e as folhas do `Picker` e do `Connect` respeitam ele.
 - Nota que sai vazia some (`Spec.empty`), mas imagem conta como conteúdo: a sticky só com foto, que o compartilhar do Android cria, fica.
