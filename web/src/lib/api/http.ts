@@ -3,21 +3,27 @@ import { token } from './token'
 
 export class Locked extends Error {}
 
+const KEEP = 64 * 1024
+let held = 0
+
 async function call<T>(method: string, path: string, body?: unknown): Promise<T> {
   const h: Record<string, string> = {}
   const raw = body instanceof Blob
   if (body !== undefined) h['content-type'] = raw ? body.type : 'application/json'
   const t = token.get()
   if (t) h.authorization = `Bearer ${t}`
-  const r = await fetch(path, {
-    method,
-    headers: h,
-    body: body === undefined ? undefined : raw ? body : JSON.stringify(body),
-    keepalive: method !== 'GET' && !raw,
-  })
-  if (r.status === 401) throw new Locked()
-  if (!r.ok) throw new Error((await r.json().catch(() => null))?.error ?? r.statusText)
-  return (r.status === 204 ? undefined : await r.json()) as T
+  const b = body === undefined || raw ? body : new TextEncoder().encode(JSON.stringify(body))
+  const n = b instanceof Uint8Array ? b.byteLength : 0
+  const keep = method !== 'GET' && !raw && held + n <= KEEP
+  if (keep) held += n
+  try {
+    const r = await fetch(path, { method, headers: h, body: b, keepalive: keep })
+    if (r.status === 401) throw new Locked()
+    if (!r.ok) throw new Error((await r.json().catch(() => null))?.error ?? r.statusText)
+    return (r.status === 204 ? undefined : await r.json()) as T
+  } finally {
+    if (keep) held -= n
+  }
 }
 
 const at = (id: string) => `/api/notes/${id}`
