@@ -32,6 +32,7 @@ pub fn router(a: App) -> Router {
         .route("/api/notes/{id}/images/{img}", delete(images::detach))
         .route("/api/images/{img}", get(images::show).put(images::adopt).layer(DefaultBodyLimit::max(MAX + 1)))
         .route("/api/sync", get(sync::page).post(sync::take).layer(DefaultBodyLimit::max(BATCH)))
+        .route("/api/sync/now", post(sync::now))
         .route("/api/links", get(links::list).post(links::add).delete(links::remove))
         .route("/api/live", get(ws::live))
         .fallback(web::serve)

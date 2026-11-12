@@ -69,8 +69,12 @@ impl Node {
 }
 
 /// Espera a condição valer, por até 15 s.
-async fn until<F: Future<Output = bool>>(what: &str, mut f: impl FnMut() -> F) {
-    for _ in 0..300 {
+async fn until<F: Future<Output = bool>>(what: &str, f: impl FnMut() -> F) {
+    within(what, Duration::from_secs(15), f).await
+}
+
+async fn within<F: Future<Output = bool>>(what: &str, max: Duration, mut f: impl FnMut() -> F) {
+    for _ in 0..max.as_millis() / 50 {
         if f().await {
             return;
         }
@@ -111,6 +115,23 @@ async fn phone_works_offline_and_catches_up() {
     let pc = Node::on(TcpListener::bind(&url[7..]).await.unwrap(), None).await;
     until("nota offline no pc", || async { pc.note(&id).await.is_some_and(|n| n["pinned"] == true) }).await;
     until("link de volta", || async { phone.state().await == "ok" }).await;
+}
+
+#[tokio::test]
+async fn network_back_syncs_at_once() {
+    let spot = TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let url = format!("http://127.0.0.1:{}", spot.local_addr().unwrap().port());
+    drop(spot);
+    let phone = Node::up(None).await;
+    phone.link(&url).await;
+    let id = phone.add(json!({ "kind": "sticky", "body": "escrito sem sinal" })).await;
+    until("link offline", || async { phone.state().await == "off" }).await;
+    sleep(Duration::from_millis(3500)).await;
+
+    let pc = Node::on(TcpListener::bind(&url[7..]).await.unwrap(), None).await;
+    let (c, _) = phone.call(M::POST, "/api/sync/now", None).await;
+    assert_eq!(c, StatusCode::NO_CONTENT);
+    within("nota no pc antes da próxima tentativa", Duration::from_secs(2), || async { pc.note(&id).await.is_some() }).await;
 }
 
 #[tokio::test]
