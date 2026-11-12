@@ -1,5 +1,7 @@
 export type Kind = 'sticky' | 'text' | 'todo' | 'board'
 
+export type Color = '' | 'yellow' | 'peach' | 'pink' | 'lilac' | 'sky' | 'mint'
+
 export interface Item {
   id: string
   text: string
@@ -22,12 +24,13 @@ export interface Note {
   items: Item[]
   images: Image[]
   pinned: boolean
+  color?: Color
   rank: number
   created: number
   updated: number
 }
 
-export type Patch = Partial<Pick<Note, 'title' | 'body' | 'items' | 'pinned' | 'rank'>>
+export type Patch = Partial<Pick<Note, 'title' | 'body' | 'items' | 'pinned' | 'color' | 'rank'>>
 
 export interface Draft {
   kind: Kind

@@ -1,4 +1,5 @@
 mod clock;
+mod color;
 mod draft;
 mod id;
 mod kind;
@@ -8,6 +9,7 @@ pub mod image;
 pub mod item;
 
 pub use clock::{Clock, merge};
+pub use color::Color;
 pub use draft::Draft;
 pub use id::Id;
 pub use image::Image;
@@ -30,6 +32,8 @@ pub struct Note {
     pub images: Vec<Image>,
     #[serde(default)]
     pub pinned: bool,
+    #[serde(default)]
+    pub color: Color,
     pub rank: f64,
     pub created: i64,
     pub updated: i64,

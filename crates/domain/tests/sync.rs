@@ -2,7 +2,7 @@ mod mem;
 
 use std::{thread::sleep, time::Duration};
 
-use domain::{Draft, Event, Item, Kind, Note, Notes, Patch, item, merge};
+use domain::{Color, Draft, Event, Shot, Item, Kind, Note, Notes, Patch, item, merge};
 use mem::full;
 
 /// Leva tudo que `a` tem para `b`.
@@ -245,4 +245,38 @@ fn merge_gives_the_same_note_either_way() {
     assert_eq!(merge(&x, &x), x);
     let m = merge(&x, &y);
     assert_eq!(merge(&m, &y), m);
+}
+
+#[test]
+fn color_on_one_side_and_text_on_the_other_both_survive() {
+    let (a, _, _) = full();
+    let (b, _, _) = full();
+    let n = a.add(Draft::new(Kind::Sticky).body("porta")).unwrap();
+    send(&a, &b);
+
+    a.edit(n.id, Patch { color: Some(Color::Sky), ..Default::default() }).unwrap();
+    tick();
+    b.edit(n.id, Patch { body: Some("porta 7341".into()), ..Default::default() }).unwrap();
+    both(&a, &b);
+
+    let m = a.get(n.id).unwrap();
+    assert_eq!((m.color, m.body.as_str()), (Color::Sky, "porta 7341"));
+    same(&a, &b);
+}
+
+#[test]
+fn old_mindblow_without_color_does_not_wash_it_out() {
+    let (a, _, _) = full();
+    let n = a.add(Draft::new(Kind::Sticky).body("porta").color(Color::Pink)).unwrap();
+    let mut old = serde_json::to_value(&a.feed(0, 10).unwrap().notes[0]).unwrap();
+    old["note"].as_object_mut().unwrap().remove("color");
+    old["clock"].as_object_mut().unwrap().remove("color");
+    old["note"]["body"] = "porta 7341".into();
+    old["note"]["updated"] = (n.updated + 10).into();
+    old["clock"]["body"] = (n.updated + 10).into();
+
+    a.take(vec![serde_json::from_value::<Shot>(old).unwrap()], Vec::new()).unwrap();
+
+    let m = a.get(n.id).unwrap();
+    assert_eq!((m.color, m.body.as_str()), (Color::Pink, "porta 7341"));
 }

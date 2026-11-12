@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use serde::{Deserialize, Serialize};
 
-use super::{Note, scene};
+use super::{Color, Note, scene};
 use crate::{Error, Result};
 
 const TITLE: usize = 200;
@@ -84,6 +84,7 @@ impl Rule for Sticky {
 impl Rule for Text {
     fn check(&self, n: &Note) -> Result<()> {
         deny(!n.items.is_empty(), "texto não tem itens")?;
+        deny(n.color != Color::Plain, "só o sticky tem cor")?;
         deny(n.images.len() > IMAGES, "nota aceita até 50 imagens")?;
         fits(&n.title, TITLE, "título aceita até 200 caracteres")?;
         fits(&n.body, LONG, "texto grande demais")
@@ -93,6 +94,7 @@ impl Rule for Text {
 impl Rule for Todo {
     fn check(&self, n: &Note) -> Result<()> {
         deny(!n.body.is_empty(), "todo não tem corpo, use itens")?;
+        deny(n.color != Color::Plain, "só o sticky tem cor")?;
         deny(n.items.len() > ITEMS, "todo aceita até 1000 itens")?;
         deny(n.images.len() > IMAGES, "nota aceita até 50 imagens")?;
         fits(&n.title, TITLE, "título aceita até 200 caracteres")?;
@@ -107,6 +109,7 @@ impl Rule for Todo {
 impl Rule for Board {
     fn check(&self, n: &Note) -> Result<()> {
         deny(!n.items.is_empty(), "board não tem itens")?;
+        deny(n.color != Color::Plain, "só o sticky tem cor")?;
         deny(n.images.len() > IMAGES, "nota aceita até 50 imagens")?;
         fits(&n.title, TITLE, "título aceita até 200 caracteres")?;
         deny(n.body.len() > SCENE, "board grande demais")?;

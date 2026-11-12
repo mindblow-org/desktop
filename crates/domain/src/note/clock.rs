@@ -19,6 +19,8 @@ pub struct Clock {
     #[serde(default)]
     pub pinned: i64,
     #[serde(default)]
+    pub color: i64,
+    #[serde(default)]
     pub rank: i64,
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub items: BTreeMap<Id, i64>,
@@ -33,6 +35,7 @@ impl Clock {
             title: t,
             body: t,
             pinned: t,
+            color: t,
             rank: t,
             items: n.items.iter().map(|i| (i.id, t)).collect(),
             images: n.images.iter().map(|i| (i.id, t)).collect(),
@@ -52,6 +55,9 @@ impl Note {
         }
         if self.pinned != old.pinned {
             c.pinned = t;
+        }
+        if self.color != old.color {
+            c.color = t;
         }
         if self.rank != old.rank {
             c.rank = t;
@@ -89,6 +95,7 @@ pub fn merge(a: &Note, b: &Note) -> Note {
     pick(&mut n.title, &mut c.title, &old.title, o.title);
     pick(&mut n.body, &mut c.body, &old.body, o.body);
     pick(&mut n.pinned, &mut c.pinned, &old.pinned, o.pinned);
+    pick(&mut n.color, &mut c.color, &old.color, o.color);
     pick(&mut n.rank, &mut c.rank, &old.rank, o.rank);
     (n.items, c.items) = join(&new.items, &new.clock.items, &old.items, &o.items, |i| i.id);
     (n.images, c.images) = join(&new.images, &new.clock.images, &old.images, &o.images, |i| i.id);

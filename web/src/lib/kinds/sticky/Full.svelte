@@ -6,6 +6,7 @@
   import type { Note } from '../../notes/types'
   import Icon from '../../ui/Icon.svelte'
   import Meta from '../Meta.svelte'
+  import Colors from './Colors.svelte'
 
   let { note, solo = false }: { note: Note; solo?: boolean } = $props()
   let body = $derived(note.body)
@@ -21,7 +22,7 @@
 
 <div class="stage" class:solo>
   <div class="wrap">
-    <div class="big" class:photo={pic || up}>
+    <div class="big" class:photo={pic || up} data-color={note.color || null}>
       {#if up}
         <div class="pic up"><img src={up.url} alt="" draggable="false" /><span class="ring"></span></div>
       {:else if pic}
@@ -43,7 +44,10 @@
       ></textarea>
     </div>
     {#if !solo}
-      <Meta {note} icon="sticky" label="sticky">{body.length}/500</Meta>
+      <div class="row">
+        <Meta {note} icon="sticky" label="sticky">{body.length}/500</Meta>
+        <Colors {note} />
+      </div>
     {/if}
   </div>
 </div>
@@ -64,6 +68,15 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    max-width: min(520px, 88vw, 68vh);
+    margin: 0 4px;
   }
 
   .big {

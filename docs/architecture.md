@@ -18,7 +18,7 @@ Quando um aparelho alcança outro, eles sincronizam (ver [Sync](#sync)). O jeito
 
 - `Note` é o aggregate. Os itens do todo fazem parte dele e são salvos juntos.
 - `Kind` escolhe a `Rule` de cada tipo (Strategy):
-  - sticky não tem título nem itens e aceita até 500 caracteres;
+  - sticky não tem título nem itens, aceita até 500 caracteres e é o único com cor (`Color`: cinza ou um de seis pastéis);
   - texto não tem itens;
   - todo não tem corpo e não aceita item vazio;
   - board não tem itens, e o corpo é a cena em JSON (`note::scene`).
@@ -79,7 +79,7 @@ As fixadas vêm primeiro e as outras depois. Dentro de cada grupo, vale o `rank:
 ### Entre aparelhos
 
 - **Feed.** Cada escrita no banco pega a próxima posição (`meta.seq`) e grava em `notes.seq`, ou em `gone.seq` quando é uma exclusão. `GET /api/sync?since=` devolve o que mudou depois de uma posição, 50 por página, com o id do aparelho.
-- **Relógio por campo.** Cada nota guarda em `clock` quando título, corpo, fixar, ordem, cada item e cada imagem mudaram. Item ou imagem que está no relógio e não na nota foi removido; isso fica lembrado por 90 dias. O PATCH com a lista inteira de itens é comparado item a item, então só o que mudou ganha carimbo novo.
+- **Relógio por campo.** Cada nota guarda em `clock` quando título, corpo, fixar, cor, ordem, cada item e cada imagem mudaram. Item ou imagem que está no relógio e não na nota foi removido; isso fica lembrado por 90 dias. O PATCH com a lista inteira de itens é comparado item a item, então só o que mudou ganha carimbo novo.
 - **Junção.** `merge` fica, em cada campo, com o carimbo mais novo; itens e imagens são juntados um a um, e a ordem é a da versão mais nova. O resultado é o mesmo nos dois sentidos, então os aparelhos convergem. Se a junção quebrar a regra do tipo (51 imagens, por exemplo), vale a versão mais nova inteira.
 - **Relógio híbrido.** O carimbo é o maior entre o relógio da máquina e o último visto + 1. Uma edição feita depois de receber outra ganha dela, mesmo com o relógio do celular atrasado. Carimbo mais de um dia no futuro não puxa o relógio.
 - **Exclusão.** Excluir guarda a nota em `gone`. Ela some do outro lado se lá ela não foi editada depois; se foi, a edição ganha e a nota volta para quem excluiu. Exclusão de nota que este aparelho nem tem também fica guardada, para uma cópia velha vinda de um terceiro não ressuscitar a nota.
@@ -122,5 +122,6 @@ web/src/view/  Main (grid + abas), Open (nota aberta), Solo (janela destacada), 
 - As abas ficam no `localStorage`, então cada dispositivo tem as suas.
 - No celular (até 640px) não há abas: abrir uma nota troca a que está aberta, e voltar ao grid fecha ela (`tabs.solo`). A volta é pelo `< Notas` da nota ou pelo botão voltar do app Android.
 - No celular também não há barra em cima: o `Bar` vira uma toolbar flutuante embaixo, no centro (QR, nova nota, busca), e some com uma nota aberta. Aí aparece a da nota (`Open`: imagem, fixar, excluir). No board a toolbar troca a imagem pelo botão de ferramentas, que liga e desliga a barra do board logo acima (`kit`); o voltar fecha a barra antes de sair do board. `--dock` é o espaço que a toolbar ocupa embaixo, e o grid, a nota e as folhas do `Picker` e do `Connect` respeitam ele.
+- A cor do sticky é o papel: `data-color` no card do grid e no sticky aberto troca `--sticky` por um dos pastéis (no escuro, versões apagadas), e o texto segue na cor de sempre. `kinds/sticky/Colors` são as bolinhas na linha de baixo do sticky aberto. O desenho está no Mocha, blend v4 do mindblow.
 - Nota que sai vazia some (`Spec.empty`), mas imagem conta como conteúdo: a sticky só com foto, que o compartilhar do Android cria, fica.
 - No app Tauri as janelas não têm moldura do sistema. `Frame` põe minimizar, maximizar e fechar na barra de cima e no cabeçalho da janela destacada; as áreas vazias têm `data-tauri-drag-region`. No navegador, `Frame` não aparece.

@@ -330,6 +330,25 @@ async fn images_need_token_too() {
 }
 
 #[tokio::test]
+async fn sticky_gets_a_color_and_wrong_ones_are_explained() {
+    let s = Srv::up(None).await;
+    let mut phone = s.ws("d=celular").await;
+    let (_, n) = s.send(M::POST, "/api/notes", Some(json!({ "kind": "sticky", "body": "porta 7341" }))).await;
+    let at = format!("/api/notes/{}", n["id"].as_str().unwrap());
+    assert_eq!(n["color"], "");
+
+    let (c, n) = s.send(M::PATCH, &at, Some(json!({ "color": "mint" }))).await;
+    assert_eq!((c, &n["color"]), (StatusCode::OK, &json!("mint")));
+    assert_eq!(next(&mut phone, "updated").await["note"]["color"], "mint");
+
+    let (c, _) = s.send(M::PATCH, &at, Some(json!({ "color": "vermelho" }))).await;
+    assert!(c.is_client_error());
+    let (c, e) = s.send(M::POST, "/api/notes", Some(json!({ "kind": "text", "title": "Ideia", "color": "pink" }))).await;
+    assert_eq!((c, &e["error"]), (StatusCode::UNPROCESSABLE_ENTITY, &json!("só o sticky tem cor")));
+    assert_eq!(s.send(M::GET, &at, None).await.1["color"], "mint");
+}
+
+#[tokio::test]
 async fn other_mindblow_hears_of_the_board_without_the_board() {
     let s = Srv::up(None).await;
     let mut tab = s.ws("d=janela").await;

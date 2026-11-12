@@ -13,7 +13,7 @@ pub use blobs::Blobs;
 pub use bus::{Bus, Listener};
 pub use error::{Error, Result};
 pub use event::Event;
-pub use note::{Clock, Draft, Id, Image, Item, Kind, Note, Patch, Rule, image, item, merge};
+pub use note::{Clock, Color, Draft, Id, Image, Item, Kind, Note, Patch, Rule, image, item, merge};
 pub use notes::Notes;
 pub use repo::Repo;
 pub use sync::{Change, Feed, Gone, Link, Links, Shot, Took};
