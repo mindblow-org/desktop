@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { close, open, prune, solo } from './tabs'
+import { close, move, open, prune, solo, spot } from './tabs'
 
 describe('abas', () => {
   it('abrir uma nota já aberta só foca a aba', () => {
@@ -52,5 +52,27 @@ describe('celular, uma nota por vez', () => {
   it('sem mudança devolve o mesmo estado', () => {
     const t = { ids: ['a'], on: 'a' }
     expect(solo(t)).toBe(t)
+  })
+
+  it('arrastar a primeira aba para o fim muda a ordem e mantém a ativa', () => {
+    expect(move({ ids: ['a', 'b', 'c'], on: 'b' }, 'a', 2)).toEqual({ ids: ['b', 'c', 'a'], on: 'b' })
+  })
+
+  it('arrastar para a esquerda põe a aba antes das outras', () => {
+    expect(move({ ids: ['a', 'b', 'c'], on: 'c' }, 'c', 0)).toEqual({ ids: ['c', 'a', 'b'], on: 'c' })
+  })
+
+  it('soltar no mesmo lugar não muda nada', () => {
+    const t = { ids: ['a', 'b'], on: 'a' }
+    expect(move(t, 'a', 0)).toBe(t)
+  })
+
+  it('a aba cai depois das que ficaram à esquerda do meio dela', () => {
+    const mids = [50, 150, 250, 350]
+    expect(spot(mids, 0, 50)).toBe(0)
+    expect(spot(mids, 0, 160)).toBe(1)
+    expect(spot(mids, 0, 400)).toBe(3)
+    expect(spot(mids, 3, 120)).toBe(1)
+    expect(spot(mids, 3, 10)).toBe(0)
   })
 })

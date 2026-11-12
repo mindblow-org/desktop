@@ -6,9 +6,10 @@ export function web(): Shell {
   const wide = matchMedia('(min-width: 720px) and (pointer: fine)').matches
   return {
     can: { detach: wide, pin: false, frame: false },
-    detach(n) {
+    detach(n, at) {
       const [w, h] = kinds[n.kind].win
-      const win = window.open(`/n/${n.id}`, `n-${n.id}`, `popup,width=${w},height=${h}`)
+      const pos = at ? `,left=${Math.round(at.x - 40)},top=${Math.round(at.y - 16)}` : ''
+      const win = window.open(`/n/${n.id}`, `n-${n.id}`, `popup,width=${w},height=${h}${pos}`)
       if (!win) return
       out.add(n.id)
       const t = setInterval(() => {

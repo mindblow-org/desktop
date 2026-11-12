@@ -15,6 +15,19 @@ export function close(t: Tabs, id: string): Tabs {
   return { ids, on }
 }
 
+export function move(t: Tabs, id: string, to: number): Tabs {
+  const i = t.ids.indexOf(id)
+  if (i < 0 || i === to) return t
+  const ids = t.ids.filter((x) => x !== id)
+  ids.splice(Math.max(0, Math.min(to, ids.length)), 0, id)
+  return { ...t, ids }
+}
+
+// Onde a aba arrastada cai: depois de todas as outras cujo meio ficou à esquerda do meio dela.
+export function spot(mids: number[], from: number, x: number): number {
+  return mids.filter((m, i) => i !== from && m < x).length
+}
+
 // No celular não há abas: fica só a nota aberta, e voltar ao grid fecha ela.
 export function solo(t: Tabs): Tabs {
   const ids = t.on ? [t.on] : []

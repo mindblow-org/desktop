@@ -26,7 +26,7 @@ export function tauri(t: Tauri): Shell {
   const me = () => t.window.getCurrentWindow()
   return {
     can: { detach: true, pin: true, frame: true },
-    async detach(n) {
+    async detach(n, at) {
       const label = `n-${n.id}`
       const has = await t.webviewWindow.WebviewWindow.getByLabel(label)
       if (has) return void has.setFocus()
@@ -37,6 +37,8 @@ export function tauri(t: Tauri): Shell {
         title: s.title(n),
         width,
         height,
+        // A janela nasce com o canto perto de onde a aba foi solta. No Wayland, quem decide é o compositor.
+        ...(at && { x: Math.round(at.x - 40), y: Math.round(at.y - 16) }),
         decorations: false,
       })
       out.add(n.id)

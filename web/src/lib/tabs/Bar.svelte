@@ -5,14 +5,17 @@
   import type { Kind } from '../notes/types'
   import Icon from '../ui/Icon.svelte'
   import { grow } from '../ui/motion.svelte'
+  import { shell, type At } from '../shell'
   import Frame from '../shell/Frame.svelte'
   import Picker from './Picker.svelte'
   import { tabs } from './store.svelte'
+  import { spot } from './tabs'
 
   let {
     picking = $bindable(false),
     onopen,
     onclose,
+    ondetach,
     onhome,
     onpick,
     onscan,
@@ -21,32 +24,111 @@
     picking?: boolean
     onopen: (id: string) => void
     onclose: (id: string) => void
+    ondetach: (id: string, at: At) => void
     onhome: () => void
     onpick: (k: Kind) => void
     onscan: () => void
     onfind: () => void
   } = $props()
   let connecting = $state(false)
+
+  // Quanto a aba precisa passar da barra, para baixo, para virar janela ao soltar.
+  const AWAY = 48
+
+  interface Drag {
+    id: string
+    i: number
+    x: number
+    y: number
+    dx: number
+    cx: number
+    cy: number
+    mids: number[]
+    w: number
+    to: number
+    on: boolean
+    out: boolean
+  }
+
+  let bar: HTMLElement
+  let nav: HTMLElement
+  let drag = $state<Drag | null>(null)
+  let skip = false
+
+  function down(e: PointerEvent, id: string, i: number) {
+    skip = false
+    if (e.button !== 0 || e.pointerType === 'touch' || (e.target as HTMLElement).closest('.x')) return
+    const els = [...nav.querySelectorAll<HTMLElement>('.tab[data-id]')]
+    const mids = els.map((el) => {
+      const r = el.getBoundingClientRect()
+      return r.left + r.width / 2
+    })
+    const w = els[i].getBoundingClientRect().width + 2
+    drag = { id, i, x: e.clientX, y: e.clientY, dx: 0, cx: e.clientX, cy: e.clientY, mids, w, to: i, on: false, out: false }
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  }
+
+  function move(e: PointerEvent) {
+    const d = drag
+    if (!d) return
+    const dx = e.clientX - d.x
+    if (!d.on && Math.hypot(dx, e.clientY - d.y) < 5) return
+    const r = bar.getBoundingClientRect()
+    const y = e.clientY
+    d.on = true
+    d.dx = dx
+    d.cx = e.clientX
+    d.cy = y
+    d.out = shell.can.detach && (y > r.bottom + AWAY || y < 0 || e.clientX < 0 || e.clientX > innerWidth)
+    d.to = d.out ? d.i : spot(d.mids, d.i, d.mids[d.i] + dx)
+  }
+
+  function up(e: PointerEvent) {
+    const d = drag
+    drag = null
+    if (!d?.on) return
+    skip = true
+    if (d.out) ondetach(d.id, { x: e.screenX, y: e.screenY })
+    else if (d.to !== d.i) tabs.move(d.id, d.to)
+  }
+
+  /** Quanto cada aba anda para abrir espaço para a arrastada. */
+  function shift(j: number) {
+    const d = drag
+    if (!d?.on || d.out || j === d.i) return 0
+    if (d.i < j && j <= d.to) return -d.w
+    if (d.to <= j && j < d.i) return d.w
+    return 0
+  }
 </script>
 
-<header class="bar" class:away={!!tabs.on} data-tauri-drag-region>
+<header class="bar" class:away={!!tabs.on} bind:this={bar} data-tauri-drag-region>
   <div class="brand" data-tauri-drag-region><span class="mark" data-tauri-drag-region></span>mindblow</div>
-  <nav class="tabs">
+  <nav class="tabs" class:moving={drag?.on} bind:this={nav}>
     <button class="tab home" class:on={!tabs.on} onclick={onhome}>
       <Icon name="grid" size={14} /><span class="t">Notas</span><span class="n">{store.list.length}</span>
     </button>
-    {#each tabs.ids as id (id)}
+    {#each tabs.ids as id, i (id)}
       {@const n = store.find(id)}
       {#if n}
         {@const s = kinds[n.kind]}
+        {@const held = drag?.on && drag.id === id}
         <div
           class="tab"
           class:on={tabs.on === id}
+          class:held
+          class:gone={held && drag?.out}
+          data-id={id}
+          style:transform={held && !drag?.out ? `translateX(${drag?.dx}px)` : shift(i) ? `translateX(${shift(i)}px)` : null}
           role="tab"
           tabindex="0"
           aria-selected={tabs.on === id}
           transition:grow
-          onclick={() => onopen(id)}
+          onpointerdown={(e) => down(e, id, i)}
+          onpointermove={move}
+          onpointerup={up}
+          onpointercancel={() => (drag = null)}
+          onclick={() => (skip ? (skip = false) : onopen(id))}
           onauxclick={(e) => e.button === 1 && onclose(id)}
           onkeydown={(e) => e.key === 'Enter' && onopen(id)}
         >
@@ -92,6 +174,16 @@
   </div>
   <Frame />
 </header>
+
+{#if drag?.on && drag.out}
+  {@const n = store.find(drag.id)}
+  {#if n}
+    <div class="ghost" style:left="{drag.cx}px" style:top="{drag.cy}px">
+      <span class="gt"><Icon name={kinds[n.kind].icon} size={14} /><span>{kinds[n.kind].title(n)}</span></span>
+      <span class="gh"><Icon name="detach" size={11} />solte para destacar</span>
+    </div>
+  {/if}
+{/if}
 
 <style>
   .bar {
@@ -151,6 +243,64 @@
     transition:
       background 120ms,
       color 120ms;
+  }
+
+  .moving .tab {
+    transition:
+      transform 160ms var(--ease),
+      background 120ms,
+      color 120ms;
+  }
+
+  .moving .tab.held {
+    z-index: 1;
+    background: var(--paper);
+    color: var(--fg);
+    box-shadow: var(--shadow-pop);
+    cursor: grabbing;
+    transition: none;
+  }
+
+  .tab.gone {
+    opacity: 0.35;
+    box-shadow: none;
+  }
+
+  .ghost {
+    position: fixed;
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 220px;
+    padding: 12px 14px;
+    border-radius: var(--r-lg);
+    background: var(--paper);
+    box-shadow: var(--shadow-pop);
+    pointer-events: none;
+    translate: -40px -16px;
+  }
+
+  .gt {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    overflow: hidden;
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .gt span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .gh {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font: 11px var(--mono);
+    color: var(--faint);
   }
 
   .tab .t {
