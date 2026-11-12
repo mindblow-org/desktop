@@ -24,10 +24,27 @@ struct Seat {
     since: i64,
 }
 
+/// Uma mensagem do `/api/live`. O evento de nota tem também a versão curta (tipo e id),
+/// para o sync de outro mindblow: ele só quer saber que algo mudou, e a nota vem pelo feed.
+#[derive(Clone)]
+pub struct Msg {
+    full: Arc<str>,
+    lean: Option<Arc<str>>,
+}
+
+impl Msg {
+    pub fn text(&self, lean: bool) -> &str {
+        match &self.lean {
+            Some(l) if lean => l,
+            _ => &self.full,
+        }
+    }
+}
+
 /// Os aparelhos ligados a este e os que os links contam: cada janela daqui é uma
 /// cadeira, e cada link traz a lista do aparelho do outro lado.
 pub struct Live {
-    tx: broadcast::Sender<Arc<str>>,
+    tx: broadcast::Sender<Msg>,
     peers: Mutex<HashMap<String, Seat>>,
     far: Mutex<HashMap<String, Vec<Peer>>>,
     me: String,
@@ -52,7 +69,7 @@ impl Live {
         }
     }
 
-    pub fn rx(&self) -> broadcast::Receiver<Arc<str>> {
+    pub fn rx(&self) -> broadcast::Receiver<Msg> {
         self.tx.subscribe()
     }
 
@@ -148,15 +165,19 @@ impl Live {
     }
 
     fn send(&self, s: String) {
-        let _ = self.tx.send(s.into());
+        let _ = self.tx.send(Msg { full: s.into(), lean: None });
     }
 }
 
 impl Listener for Live {
     fn on(&self, e: &Event) {
-        if let Ok(s) = serde_json::to_string(e) {
-            self.send(s);
-        }
+        let Ok(full) = serde_json::to_string(e) else { return };
+        let lean = match e {
+            Event::Created { note } => Some(json!({ "type": "created", "id": note.id })),
+            Event::Updated { note } => Some(json!({ "type": "updated", "id": note.id })),
+            Event::Deleted { .. } => None,
+        };
+        let _ = self.tx.send(Msg { full: full.into(), lean: lean.map(|l| l.to_string().into()) });
     }
 }
 

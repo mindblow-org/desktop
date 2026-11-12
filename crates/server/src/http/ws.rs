@@ -19,6 +19,9 @@ const RESYNC: &str = r#"{"type":"resync"}"#;
 pub struct Dev {
     d: Option<String>,
     n: Option<String>,
+    /// Outro mindblow (o sync de um link): evento de nota sem a nota.
+    #[serde(default)]
+    lean: bool,
 }
 
 #[derive(Deserialize)]
@@ -30,21 +33,21 @@ struct Say {
 pub async fn live(ws: WebSocketUpgrade, Query(q): Query<Dev>, State(a): State<App>) -> Response {
     let dev = q.d.filter(|d| !d.is_empty() && d.len() <= 64).unwrap_or_else(|| Id::new().to_string());
     let name = q.n.unwrap_or_default();
-    ws.on_upgrade(move |s| run(s, a.live, dev, name))
+    ws.on_upgrade(move |s| run(s, a.live, dev, name, q.lean))
 }
 
-async fn run(mut s: WebSocket, live: Arc<Live>, dev: String, name: String) {
+async fn run(mut s: WebSocket, live: Arc<Live>, dev: String, name: String, lean: bool) {
     let mut rx = live.rx();
     live.join(&dev, &name);
     loop {
         tokio::select! {
             m = rx.recv() => {
-                let t = match m {
-                    Ok(t) => t,
-                    Err(RecvError::Lagged(_)) => RESYNC.into(),
+                let t = match &m {
+                    Ok(m) => m.text(lean),
+                    Err(RecvError::Lagged(_)) => RESYNC,
                     Err(RecvError::Closed) => break,
                 };
-                if s.send(Message::Text(t.as_ref().into())).await.is_err() {
+                if s.send(Message::Text(t.into())).await.is_err() {
                     break;
                 }
             }

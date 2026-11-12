@@ -327,3 +327,16 @@ async fn images_need_token_too() {
     let r = s.http.get(s.url(&format!("/api/images/{img}?token=s3gredo"))).send().await.unwrap();
     assert_eq!(r.status(), StatusCode::OK);
 }
+
+#[tokio::test]
+async fn other_mindblow_hears_of_the_board_without_the_board() {
+    let s = Srv::up(None).await;
+    let mut tab = s.ws("d=janela").await;
+    let mut phone = s.ws("d=celular&lean=true").await;
+    let els: Vec<_> = (0..300).map(|i| json!({ "id": format!("s{i}"), "t": "pen", "c": 0, "pts": [0, 0, i, i] })).collect();
+    let scene = json!({ "v": 1, "els": els }).to_string();
+    let (_, n) = s.send(M::POST, "/api/notes", Some(json!({ "kind": "board", "body": scene }))).await;
+
+    assert_eq!(next(&mut tab, "created").await["note"]["body"], scene);
+    assert_eq!(next(&mut phone, "created").await, json!({ "type": "created", "id": n["id"] }));
+}

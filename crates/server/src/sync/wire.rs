@@ -93,6 +93,7 @@ impl Wire {
             let mut q = u.query_pairs_mut();
             q.append_pair("d", &node.to_string());
             q.append_pair("n", name);
+            q.append_pair("lean", "true");
             if !l.token.is_empty() {
                 q.append_pair("token", &l.token);
             }
