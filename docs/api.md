@@ -13,6 +13,7 @@ Base: `http://localhost:7341` (o app desktop e o Android têm um servidor desses
   "items": [{ "id": "0193…", "text": "café", "done": false }],
   "images": [{ "id": "0193…", "mime": "image/webp", "size": 160812, "w": 2048, "h": 1536 }],
   "pinned": false,
+  "color": "",
   "rank": -3,
   "created": 1794413817178,
   "updated": 1794413817178
@@ -21,7 +22,7 @@ Base: `http://localhost:7341` (o app desktop e o Android têm um servidor desses
 
 `kind` é `sticky`, `text`, `todo` ou `board`. Cada tipo aceita uma forma; o que fugir dela volta `422` com `{"error": "..."}`:
 
-- **sticky**: só `body`, até 500 caracteres;
+- **sticky**: só `body`, até 500 caracteres, e `color`, a cor do papel: `""` (cinza), `yellow`, `peach`, `pink`, `lilac`, `sky` ou `mint`. Os outros tipos não têm cor;
 - **text**: `title` e `body`;
 - **todo**: `title` e `items`;
 - **board**: `title` e `body` com a cena em JSON, até 1 MB.
@@ -59,9 +60,9 @@ O `body` de um board vazio é `""`. Com desenho, é um JSON assim:
 | Método | Rota | Corpo | Resposta |
 |---|---|---|---|
 | GET | `/api/notes` | `?q=` opcional | lista, na ordem do grid |
-| POST | `/api/notes` | `{kind, title?, body?, items?, pinned?}` | `201` nota |
+| POST | `/api/notes` | `{kind, title?, body?, items?, pinned?, color?}` | `201` nota |
 | GET | `/api/notes/{id}` | | nota |
-| PATCH | `/api/notes/{id}` | `{title?, body?, items?, pinned?, rank?}` | nota |
+| PATCH | `/api/notes/{id}` | `{title?, body?, items?, pinned?, color?, rank?}` | nota |
 | DELETE | `/api/notes/{id}` | | `204` |
 | POST | `/api/notes/{id}/items` | `{text, id?, done?}` | `201` nota |
 | PATCH | `/api/notes/{id}/items/{item}` | `{text?, done?}` | nota |
@@ -116,7 +117,7 @@ Cada mindblow guarda um feed das próprias mudanças e sincroniza com os links q
   "node": "0193…",
   "seq": 40,
   "more": false,
-  "notes": [{ "note": { … }, "clock": { "title": 1794413817178, "body": 1794413817178, "pinned": 0, "rank": 0, "items": { "0193…": 1794413817178 } } }],
+  "notes": [{ "note": { … }, "clock": { "title": 1794413817178, "body": 1794413817178, "pinned": 0, "color": 0, "rank": 0, "items": { "0193…": 1794413817178 } } }],
   "gone": [{ "id": "0193…", "at": 1794413900000 }]
 }
 ```
