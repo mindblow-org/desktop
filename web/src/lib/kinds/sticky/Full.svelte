@@ -181,8 +181,10 @@
   }
 
   .solo {
+    position: absolute;
+    inset: 0;
+    display: block;
     padding: 0;
-    height: 100%;
   }
 
   .solo .wrap {
