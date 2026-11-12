@@ -1,19 +1,31 @@
 # Deploy e configuração
 
+## Instalar no Linux
+
+O `install.sh` da release mais nova instala o app desktop ou o serviço, a partir dos arquivos prontos da release (sem precisar de Rust nem pnpm). Rodar de novo atualiza.
+
+```sh
+curl -fsSL https://github.com/mindblow-org/desktop/releases/latest/download/install.sh | bash
+```
+
+Sem opção, ele instala o **app desktop**: baixa o AppImage para `~/.local/bin/mindblow-app` e registra o ícone e a entrada "mindblow" no menu (`~/.local/share/applications` e `~/.local/share/icons`). Sem FUSE (`/dev/fuse` e `fusermount`), o app vai extraído em `~/.local/share/mindblow/app`.
+
 ## Servidor
 
 ```sh
-./deploy/install.sh
+curl -fsSL https://github.com/mindblow-org/desktop/releases/latest/download/install.sh | bash -s -- --servidor
 ```
 
-O script faz quatro coisas:
+Com `--servidor`, o script faz quatro coisas:
 
-1. Compila `web/` e o binário `mindblow`, com a interface embutida, e instala em `~/.local/bin`.
+1. Baixa o binário `mindblow`, com a interface embutida, e instala em `~/.local/bin`.
 2. Cria e liga o serviço de usuário `mindblow.service`.
 3. Publica na tailnet com `tailscale serve --bg --https=7341 http://127.0.0.1:7341`.
 4. Imprime o link, por exemplo `https://maquina.tail1234.ts.net:7341`.
 
-Ele pode rodar de novo sem problema, e é assim que se atualiza. Para outra porta: `MINDBLOW_PORT=7400 ./deploy/install.sh`. O script recusa porta que outro programa já ocupa.
+Para outra porta: `MINDBLOW_PORT=7400` antes do `bash`. O script recusa porta que outro programa já ocupa. Para compilar do código em vez de baixar, de dentro do repo: `./install.sh --fonte`.
+
+Outras opções: `--versao v0.3.0` instala uma versão em vez da mais nova, e `--remover` tira o app e o serviço (as notas ficam em `~/.local/share/mindblow/mindblow.db`).
 
 Antes, ligue no Tailscale **MagicDNS** e **HTTPS Certificates**. Se o `tailscale serve` negar acesso, rode `sudo tailscale set --operator="$USER"` e tente de novo.
 

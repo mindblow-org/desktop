@@ -7,7 +7,7 @@ crates/server   HTTP, WebSocket, sync e a interface embutida (bin `mindblow`)
 crates/mobile   o servidor como libmindblow.so, para o app Android
 app/            janela Tauri, que leva o servidor junto
 web/            interface Svelte 5
-deploy/         systemd + tailscale serve
+install.sh      instalador do Linux: app desktop, ou serviço systemd + tailscale serve
 ```
 
 Cada aparelho com app roda o próprio mindblow, com banco próprio, e funciona sem rede: o app desktop sobe o servidor em `localhost:7341` (ou usa o serviço, se ele já ocupa a porta), e o app Android leva o mesmo servidor compilado como `libmindblow.so`. A interface é sempre a mesma, entregue pelo servidor do aparelho. O navegador/PWA é cliente de um mindblow da tailnet, como antes.
