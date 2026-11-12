@@ -5,19 +5,30 @@
   import { place } from '../notes/rank'
   import { store } from '../notes/store.svelte'
   import type { Kind, Note } from '../notes/types'
-  import { shell } from '../shell'
+  import { shell, type At } from '../shell'
   import { out } from '../shell/out.svelte'
+  import { air } from '../tabs/air.svelte'
+  import Ghost from '../tabs/Ghost.svelte'
   import Icon from '../ui/Icon.svelte'
   import { fly, pop } from '../ui/motion.svelte'
   import { near, shift, size, stack } from './layout'
 
-  let { onopen }: { onopen: (id: string) => void } = $props()
+  let {
+    onopen,
+    ontab,
+    ondetach,
+  }: {
+    onopen: (id: string) => void
+    ontab: (id: string, at: number) => void
+    ondetach: (id: string, at: At) => void
+  } = $props()
 
   let only = $state<Kind | null>(null)
   let room = $state(0)
   let ready = $state(false)
   let order = $state<string[] | null>(null)
   let drag = $state<{ id: string; g: number; x: number; y: number; on: boolean } | null>(null)
+  let land = $state<{ x: number; y: number; at: number } | null>(null)
   let el: HTMLDivElement
 
   const shown = $derived(only ? store.sorted.filter((n) => n.kind === only) : store.sorted)
@@ -73,25 +84,51 @@
     }
     drag.x = start.bx + dx
     drag.y = start.by + dy
+    const l = e.pointerType === 'touch' ? null : zone(drag.id, e.clientX, e.clientY)
+    if (l && !land) order = groups[drag.g].map((n) => n.id)
+    land = l
+    const to = l ? l.at : -1
+    if ((air.over?.at ?? -1) !== to) air.over = to >= 0 ? { id: drag.id, at: to } : null
+    if (l) return
     const boxes = map.boxes[drag.g]
     const h = boxes[at]?.h ?? 0
     const t = near(boxes, drag.x + dims.w / 2, drag.y + h / 2, dims.w)
     if (t >= 0 && t !== at && order) order = shift(order, at, t)
   }
 
-  function up() {
+  function zone(id: string, x: number, y: number) {
+    const at = air.slot(id, x, y)
+    if (at >= 0) return { x, y, at }
+    const off = x < 0 || y < 0 || x > innerWidth || y > innerHeight
+    return off && shell.can.detach ? { x, y, at: -1 } : null
+  }
+
+  function up(e?: PointerEvent) {
     clearTimeout(hold)
     const d = drag
     if (!d) return
+    const l = land
     drag = null
+    land = null
+    air.over = null
     if (!d.on) return onopen(d.id)
+    if (l && e) {
+      order = null
+      return l.at >= 0 ? ontab(d.id, l.at) : ondetach(d.id, { x: e.screenX, y: e.screenY })
+    }
     const i = order?.indexOf(d.id) ?? -1
     order = null
     if (i >= 0) store.move(d.id, place(groups[d.g], d.id, i))
   }
 
+  function lost(e: PointerEvent) {
+    if (drag?.on && e.buttons) (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+  }
+
   function cancel() {
     clearTimeout(hold)
+    land = null
+    air.over = null
     if (drag?.on) return up()
     drag = null
   }
@@ -120,16 +157,18 @@
           <div class="head" style:transform="translate(0px, {map.heads[1]}px)" transition:fade={{ duration: 160 }}>Outras</div>
         {/if}
       {/if}
-      {#if drag && at >= 0}
+      {#if drag && at >= 0 && !land}
         {@const b = map.boxes[drag.g][at]}
         <div class="slot" style:width="{dims.w}px" style:height="{b.h}px" style:transform="translate({b.x}px, {b.y}px)"></div>
       {/if}
       {#each flat as { n, k, b } (n.id)}
         {@const s = kinds[n.kind]}
-        {@const lifted = drag?.on && drag.id === n.id}
+        {@const held = drag?.on && drag.id === n.id}
+        {@const lifted = held && !land}
         <div
           class="card {n.kind}"
           class:lift={lifted}
+          class:gone={held && !!land}
           data-color={n.color || null}
           style:width="{dims.w}px"
           style:height="{b.h}px"
@@ -141,6 +180,7 @@
           onpointermove={move}
           onpointerup={up}
           onpointercancel={cancel}
+          onlostpointercapture={lost}
           onkeydown={(e) => e.key === 'Enter' && e.target === e.currentTarget && onopen(n.id)}
           tabindex="0"
           role="button"
@@ -168,6 +208,11 @@
     </div>
   </div>
 </div>
+
+{#if drag && land}
+  {@const n = store.find(drag.id)}
+  {#if n}<Ghost note={n} x={land.x} y={land.y} tab={land.at >= 0} />{/if}
+{/if}
 
 <style>
   .wall {
@@ -299,6 +344,12 @@
       box-shadow 160ms,
       scale 160ms,
       rotate 160ms;
+  }
+
+  .card.gone {
+    z-index: 10;
+    opacity: 0.35;
+    cursor: grabbing;
   }
 
   .acts {

@@ -3,8 +3,11 @@ export interface Tabs {
   on: string | null
 }
 
-export function open(t: Tabs, id: string): Tabs {
-  return { ids: t.ids.includes(id) ? t.ids : [...t.ids, id], on: id }
+export function open(t: Tabs, id: string, at?: number): Tabs {
+  if (at === undefined) return { ids: t.ids.includes(id) ? t.ids : [...t.ids, id], on: id }
+  const ids = t.ids.filter((x) => x !== id)
+  ids.splice(Math.max(0, Math.min(at, ids.length)), 0, id)
+  return { ids, on: id }
 }
 
 export function close(t: Tabs, id: string): Tabs {
