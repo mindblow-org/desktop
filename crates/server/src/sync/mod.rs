@@ -47,6 +47,7 @@ pub struct State {
 
 struct Run {
     kick: Arc<Notify>,
+    dial: Arc<Notify>,
     tasks: Vec<AbortHandle>,
     state: State,
 }
@@ -95,6 +96,13 @@ impl Syncer {
         Ok(had)
     }
 
+    /// A rede do aparelho mudou: o `/api/live` de cada link reconecta na hora, e reconectar acorda o laço.
+    pub fn now(&self) {
+        for r in self.runs.lock().unwrap().values() {
+            r.dial.notify_one();
+        }
+    }
+
     pub fn list(&self) -> Vec<State> {
         let mut v: Vec<_> = self.runs.lock().unwrap().values().map(|r| r.state.clone()).collect();
         v.sort_by(|a, b| a.url.cmp(&b.url));
@@ -104,12 +112,13 @@ impl Syncer {
     fn run(self: &Arc<Self>, l: Link) {
         let kick = Arc::new(Notify::new());
         let up = Arc::new(Notify::new());
+        let dial = Arc::new(Notify::new());
         let state = State { url: l.url.clone(), token: l.token.clone(), state: "wait".into(), at: None, error: None };
         let tasks = vec![
             tokio::spawn(self.clone().turn(l.url.clone(), kick.clone(), up.clone())).abort_handle(),
-            tokio::spawn(self.clone().listen(l.url.clone(), kick.clone(), up)).abort_handle(),
+            tokio::spawn(self.clone().listen(l.url.clone(), kick.clone(), up, dial.clone())).abort_handle(),
         ];
-        let old = self.runs.lock().unwrap().insert(l.url.clone(), Run { kick, tasks, state });
+        let old = self.runs.lock().unwrap().insert(l.url.clone(), Run { kick, dial, tasks, state });
         if let Some(r) = old {
             r.tasks.iter().for_each(AbortHandle::abort);
         }
@@ -215,7 +224,7 @@ impl Syncer {
 
     /// Fica ligado no `/api/live` do link: mudança lá acorda o laço, e a lista de
     /// aparelhos de lá entra na daqui. Também leva o nome deste aparelho.
-    async fn listen(self: Arc<Self>, url: String, kick: Arc<Notify>, up: Arc<Notify>) {
+    async fn listen(self: Arc<Self>, url: String, kick: Arc<Notify>, up: Arc<Notify>, dial: Arc<Notify>) {
         let mut wait = MIN;
         loop {
             let Ok(Some(l)) = self.link(&url) else { return };
@@ -241,6 +250,8 @@ impl Syncer {
                                     break;
                                 }
                             }
+                            // Depois de trocar de rede, a conexão antiga pode estar morta sem ninguém saber.
+                            _ = dial.notified() => break,
                         }
                     }
                     self.live.far(&url, Vec::new());
@@ -248,8 +259,10 @@ impl Syncer {
                 Err(Fail::Locked) => return,
                 Err(_) => {}
             }
-            sleep(wait).await;
-            wait = (wait * 2).min(MAX);
+            tokio::select! {
+                _ = dial.notified() => wait = MIN,
+                _ = sleep(wait) => wait = (wait * 2).min(MAX),
+            }
         }
     }
 

@@ -1,6 +1,7 @@
 use axum::{
     Json,
     extract::{Query, State},
+    http::StatusCode,
 };
 use domain::{Gone, Shot, Took};
 use serde::Deserialize;
@@ -33,4 +34,9 @@ pub struct Batch {
 
 pub async fn take(State(a): State<App>, Json(b): Json<Batch>) -> Res<Json<Took>> {
     Ok(Json(a.notes.take(b.notes, b.gone)?))
+}
+
+pub async fn now(State(a): State<App>) -> StatusCode {
+    a.sync.now();
+    StatusCode::NO_CONTENT
 }
