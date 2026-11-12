@@ -99,6 +99,7 @@ Notas e itens aceitam o `id` vindo de quem cria. Se não vier, o servidor gera u
 ```
 
 - `?d=<id do dispositivo>` faz várias janelas do mesmo aparelho contarem como um só em `peers`.
+- `?lean=true` é para outro mindblow (o laço do sync): `created` e `updated` vêm só com `type` e `id`, sem a nota, que ele busca pelo feed.
 - `?n=<nome>` dá nome ao aparelho na lista (até 40 caracteres). Para renomear sem reconectar, o cliente manda `{"type":"name","name":"Celular"}` pelo próprio WebSocket, e todos recebem um `peers` novo.
 - `list` vem em ordem de chegada; `since` é quando o aparelho conectou.
 - `resync` avisa que o cliente perdeu eventos e precisa recarregar a lista.
@@ -124,6 +125,8 @@ Cada mindblow guarda um feed das próprias mudanças e sincroniza com os links q
 - `seq` é a posição do feed até onde a página vai; a próxima começa dali. `node` é o id do aparelho, para um link que aponta para o próprio aparelho ser notado.
 - `clock` diz quando cada campo, item e imagem mudou. Item ou imagem que está no `clock` e não na nota foi removido.
 - `gone` são notas excluídas, com quando.
+
+A página traz também `gzip: true`: este mindblow aceita o lote do `POST /api/sync` com `Content-Encoding: gzip`. As respostas da API e da interface vêm em gzip para quem manda `Accept-Encoding: gzip` (menos o `/api/live`).
 
 `POST /api/sync` leva `{notes, gone}` no mesmo formato e junta campo a campo com o que já existe (o carimbo mais novo ganha). Responde `{from, to, need}`: a posição do feed antes e depois do lote e as imagens que faltam, para quem mandou enviar por `PUT /api/images/{img}`.
 
