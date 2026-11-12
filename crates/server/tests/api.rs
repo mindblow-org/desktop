@@ -1,5 +1,6 @@
-use std::{sync::Arc, time::Duration};
+use std::{io::Write, sync::Arc, time::Duration};
 
+use flate2::{Compression, read::GzDecoder, write::GzEncoder};
 use futures_util::{SinkExt, StreamExt};
 use reqwest::{Client, Method as M, StatusCode, header};
 use serde_json::{Value, json};
@@ -326,4 +327,46 @@ async fn images_need_token_too() {
     assert_eq!(r.status(), StatusCode::UNAUTHORIZED);
     let r = s.http.get(s.url(&format!("/api/images/{img}?token=s3gredo"))).send().await.unwrap();
     assert_eq!(r.status(), StatusCode::OK);
+}
+
+#[tokio::test]
+async fn other_mindblow_hears_of_the_board_without_the_board() {
+    let s = Srv::up(None).await;
+    let mut tab = s.ws("d=janela").await;
+    let mut phone = s.ws("d=celular&lean=true").await;
+    let els: Vec<_> = (0..300).map(|i| json!({ "id": format!("s{i}"), "t": "pen", "c": 0, "pts": [0, 0, i, i] })).collect();
+    let scene = json!({ "v": 1, "els": els }).to_string();
+    let (_, n) = s.send(M::POST, "/api/notes", Some(json!({ "kind": "board", "body": scene }))).await;
+
+    assert_eq!(next(&mut tab, "created").await["note"]["body"], scene);
+    assert_eq!(next(&mut phone, "created").await, json!({ "type": "created", "id": n["id"] }));
+}
+
+#[tokio::test]
+async fn long_note_travels_gzipped_both_ways() {
+    let pc = Srv::up(None).await;
+    let body = "ideia que não cabe num sticky. ".repeat(400);
+    pc.send(M::POST, "/api/notes", Some(json!({ "kind": "text", "title": "Longa", "body": body }))).await;
+    let raw = Client::builder().no_gzip().build().unwrap();
+
+    let r = raw.get(pc.url("/api/sync?since=0")).header(header::ACCEPT_ENCODING, "gzip").send().await.unwrap();
+    assert_eq!(r.headers()[header::CONTENT_ENCODING], "gzip");
+    let zipped = r.bytes().await.unwrap();
+    let page: Value = serde_json::from_reader(GzDecoder::new(&zipped[..])).unwrap();
+    assert_eq!(page["gzip"], true);
+    assert!(zipped.len() * 3 < body.len(), "{} bytes comprimidos para {} de texto", zipped.len(), body.len());
+
+    let phone = Srv::up(None).await;
+    let mut e = GzEncoder::new(Vec::new(), Compression::default());
+    e.write_all(&serde_json::to_vec(&json!({ "notes": page["notes"], "gone": [] })).unwrap()).unwrap();
+    let r = raw
+        .post(phone.url("/api/sync"))
+        .header(header::CONTENT_TYPE, "application/json")
+        .header(header::CONTENT_ENCODING, "gzip")
+        .body(e.finish().unwrap())
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(r.status(), StatusCode::OK);
+    assert_eq!(phone.send(M::GET, "/api/notes", None).await.1[0]["body"], body);
 }
