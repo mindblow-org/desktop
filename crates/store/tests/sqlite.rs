@@ -1,6 +1,6 @@
 use std::{path::PathBuf, sync::Arc};
 
-use domain::{Bus, Draft, Id, Kind, Link, Links, Notes, Patch, item};
+use domain::{Bus, Color, Draft, Id, Kind, Link, Links, Notes, Patch, item};
 use store::Sqlite;
 
 struct Tmp(PathBuf);
@@ -87,6 +87,16 @@ fn pin_survives_restart() {
 }
 
 #[test]
+fn color_survives_restart() {
+    let tmp = Tmp::new();
+    let n = tmp.notes();
+    let s = n.add(Draft::new(Kind::Sticky).body("porta 7341").color(Color::Lilac)).unwrap();
+    drop(n);
+
+    assert_eq!(tmp.notes().get(s.id).unwrap().color, Color::Lilac);
+}
+
+#[test]
 fn old_database_keeps_notes_after_upgrade() {
     let tmp = Tmp::new();
     std::fs::create_dir_all(tmp.0.parent().unwrap()).unwrap();
@@ -107,7 +117,7 @@ fn old_database_keeps_notes_after_upgrade() {
 
     let n = tmp.notes();
     let note = n.get(id).unwrap();
-    assert_eq!((note.title.as_str(), note.pinned), ("Ideia", false));
+    assert_eq!((note.title.as_str(), note.pinned, note.color), ("Ideia", false, Color::Plain));
     n.edit(id, Patch { pinned: Some(true), ..Default::default() }).unwrap();
     assert!(n.get(id).unwrap().pinned);
     assert_eq!(n.feed(0, 10).unwrap().notes[0].note.id, id);

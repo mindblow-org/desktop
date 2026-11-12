@@ -135,6 +135,18 @@ async fn network_back_syncs_at_once() {
 }
 
 #[tokio::test]
+async fn sticky_color_travels_to_the_pc() {
+    let pc = Node::up(None).await;
+    let phone = Node::up(None).await;
+    phone.link(&pc.url).await;
+    let id = phone.add(json!({ "kind": "sticky", "body": "comprar filtro de café", "color": "mint" })).await;
+    until("sticky verde no pc", || async { pc.note(&id).await.is_some_and(|n| n["color"] == "mint") }).await;
+
+    phone.call(M::PATCH, &format!("/api/notes/{id}"), Some(json!({ "color": "peach" }))).await;
+    until("troca de cor no pc", || async { pc.note(&id).await.is_some_and(|n| n["color"] == "peach") }).await;
+}
+
+#[tokio::test]
 async fn edits_on_both_sides_merge() {
     let pc = Node::up(None).await;
     let phone = Node::up(None).await;

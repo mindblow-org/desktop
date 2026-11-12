@@ -1,6 +1,6 @@
 mod mem;
 
-use domain::{Draft, Error, Event, Id, Item, Kind, Notes, Patch, image, item, rank};
+use domain::{Color, Draft, Error, Event, Id, Item, Kind, Notes, Patch, image, item, rank};
 use mem::{Log, full};
 
 fn app() -> (Notes, Log) {
@@ -264,4 +264,18 @@ fn deleting_note_deletes_its_images() {
     n.remove(t.id).unwrap();
 
     assert!(files.0.lock().unwrap().is_empty());
+}
+
+#[test]
+fn sticky_takes_a_pastel_and_the_rest_stay_gray() {
+    let (n, _) = app();
+    let s = n.add(Draft::new(Kind::Sticky).body("ligar pro contador").color(Color::Yellow)).unwrap();
+    let t = n.add(Draft::new(Kind::Text).title("Ideia")).unwrap();
+
+    let s = n.edit(s.id, Patch { color: Some(Color::Mint), ..Default::default() }).unwrap();
+    let e = n.edit(t.id, Patch { color: Some(Color::Pink), ..Default::default() });
+
+    assert_eq!(s.color, Color::Mint);
+    assert!(matches!(e, Err(Error::Invalid("só o sticky tem cor"))));
+    assert_eq!(n.get(t.id).unwrap().color, Color::Plain);
 }

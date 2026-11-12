@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use super::{Item, Note};
+use super::{Color, Item, Note};
 
 #[derive(Clone, Debug, Default, Deserialize)]
 pub struct Patch {
@@ -8,6 +8,7 @@ pub struct Patch {
     pub body: Option<String>,
     pub items: Option<Vec<Item>>,
     pub pinned: Option<bool>,
+    pub color: Option<Color>,
     pub rank: Option<f64>,
 }
 
@@ -24,6 +25,9 @@ impl Patch {
         }
         if let Some(v) = self.pinned {
             n.pinned = v;
+        }
+        if let Some(v) = self.color {
+            n.color = v;
         }
         if let Some(v) = self.rank {
             n.rank = v;

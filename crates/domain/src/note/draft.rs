@@ -1,6 +1,6 @@
 use serde::Deserialize;
 
-use super::{Clock, Id, Item, Kind, Note};
+use super::{Clock, Color, Id, Item, Kind, Note};
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Draft {
@@ -13,11 +13,13 @@ pub struct Draft {
     pub items: Vec<Item>,
     #[serde(default)]
     pub pinned: bool,
+    #[serde(default)]
+    pub color: Color,
 }
 
 impl Draft {
     pub fn new(kind: Kind) -> Self {
-        Self { kind, title: String::new(), body: String::new(), items: Vec::new(), pinned: false }
+        Self { kind, title: String::new(), body: String::new(), items: Vec::new(), pinned: false, color: Color::Plain }
     }
 
     pub fn title(mut self, v: impl Into<String>) -> Self {
@@ -40,6 +42,11 @@ impl Draft {
         self
     }
 
+    pub fn color(mut self, c: Color) -> Self {
+        self.color = c;
+        self
+    }
+
     pub fn note(self, rank: f64, now: i64) -> Note {
         let mut n = Note {
             id: Id::new(),
@@ -49,6 +56,7 @@ impl Draft {
             items: self.items,
             images: Vec::new(),
             pinned: self.pinned,
+            color: self.color,
             rank,
             created: now,
             updated: now,

@@ -9,8 +9,9 @@ const STEPS: &[&str] = &[
     include_str!("sql/2-pinned.sql"),
     include_str!("sql/3-images.sql"),
     include_str!("sql/4-sync.sql"),
+    include_str!("sql/5-color.sql"),
 ];
-const COLS: &str = "id, kind, title, body, items, images, pinned, rank, created, updated, clock";
+const COLS: &str = "id, kind, title, body, items, images, pinned, rank, created, updated, clock, color";
 
 pub struct Sqlite {
     db: Mutex<Connection>,
@@ -77,13 +78,13 @@ impl Repo for Sqlite {
             let seq = bump(t)?;
             t.execute(
                 &format!(
-                    "insert into notes ({COLS}, seq) values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
+                    "insert into notes ({COLS}, seq) values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)
                      on conflict(id) do update set kind = excluded.kind, title = excluded.title,
                      body = excluded.body, items = excluded.items, images = excluded.images,
                      pinned = excluded.pinned, rank = excluded.rank, created = excluded.created,
-                     updated = excluded.updated, clock = excluded.clock, seq = excluded.seq"
+                     updated = excluded.updated, clock = excluded.clock, color = excluded.color, seq = excluded.seq"
                 ),
-                params![id, n.kind.name(), n.title, n.body, items, images, n.pinned, n.rank, n.created, n.updated, clock, seq],
+                params![id, n.kind.name(), n.title, n.body, items, images, n.pinned, n.rank, n.created, n.updated, clock, n.color.name(), seq],
             )?;
             t.execute("delete from gone where id = ?1", [&id])?;
             Ok(())
@@ -147,7 +148,7 @@ impl Repo for Sqlite {
             .prepare(&format!("select {COLS}, seq from notes where seq > ?1 order by seq limit ?2"))
             .map_err(fail)?;
         let rows = q
-            .query_map(params![since, limit as i64], |r| Ok((r.get::<_, i64>(11)?, raw(r)?)))
+            .query_map(params![since, limit as i64], |r| Ok((r.get::<_, i64>(12)?, raw(r)?)))
             .map_err(fail)?;
         for r in rows {
             let (seq, n) = r.map_err(fail)?;
@@ -262,6 +263,7 @@ struct Raw {
     created: i64,
     updated: i64,
     clock: String,
+    color: String,
 }
 
 impl Raw {
@@ -274,6 +276,7 @@ impl Raw {
             items: serde_json::from_str(&self.items).map_err(fail)?,
             images: serde_json::from_str(&self.images).map_err(fail)?,
             pinned: self.pinned,
+            color: self.color.parse()?,
             rank: self.rank,
             created: self.created,
             updated: self.updated,
@@ -295,6 +298,7 @@ fn raw(r: &Row) -> rusqlite::Result<Raw> {
         created: r.get(8)?,
         updated: r.get(9)?,
         clock: r.get(10)?,
+        color: r.get(11)?,
     })
 }
 
