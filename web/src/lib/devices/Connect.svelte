@@ -148,7 +148,7 @@
     </div>
     {#if target?.token}<p class="note">O QR leva o token: quem escanear entra direto, sem digitar.</p>{/if}
   {:else if target === null}
-    <p class="note none">Este aparelho guarda as notas só para ele. Para levar a outro, ligue abaixo o link de um mindblow da sua tailnet, ou rode <code>./deploy/install.sh</code> no PC para ele ter um link.</p>
+    <p class="note none">Este aparelho guarda as notas só para ele. Para levar a outro, ligue abaixo o link de um mindblow da sua tailnet, ou instale o mindblow como serviço no PC (<code>install.sh --servidor</code>) para ele ter um link.</p>
   {:else}
     <div class="qr wait"></div>
   {/if}

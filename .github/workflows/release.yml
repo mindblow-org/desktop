@@ -45,11 +45,12 @@ jobs:
             gh release delete "$TAG" --yes
           fi
           cat > notes.md <<'EOF'
-          **Servidor** (com a interface embutida): `mindblow-linux-x64`, `mindblow-linux-arm64` e `mindblow-windows-x64.exe`. No Linux, o jeito mais fácil continua sendo o `./deploy/install.sh`, que sobe o serviço e publica na tailnet.
+          **Servidor** (com a interface embutida): `mindblow-linux-x64`, `mindblow-linux-arm64` e `mindblow-windows-x64.exe`. No Linux, o jeito mais fácil é o instalador: `curl -fsSL https://github.com/mindblow-org/desktop/releases/latest/download/install.sh | bash -s -- --servidor`, que sobe o serviço e publica na tailnet.
 
-          **App desktop**: `.AppImage` e `.deb` no Linux, `-setup.exe` no Windows. O app leva o servidor junto e funciona sem rede; para sincronizar com outra máquina, veja [Deploy e configuração](https://github.com/mindblow-org/desktop/blob/main/docs/deploy.md#app-desktop).
+          **App desktop**: `.AppImage` e `.deb` no Linux, `-setup.exe` no Windows. No Linux, `curl -fsSL https://github.com/mindblow-org/desktop/releases/latest/download/install.sh | bash` instala o AppImage com ícone e entrada no menu. O app leva o servidor junto e funciona sem rede; para sincronizar com outra máquina, veja [Deploy e configuração](https://github.com/mindblow-org/desktop/blob/main/docs/deploy.md#app-desktop).
           EOF
           gh release create "$TAG" --draft --target "$GITHUB_SHA" --title "mindblow $TAG" --notes-file notes.md --generate-notes
+          gh release upload "$TAG" install.sh --clobber
 
   server:
     name: servidor (${{ matrix.name }})

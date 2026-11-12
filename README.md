@@ -44,17 +44,21 @@ Sem o app, abra o link da tailnet no navegador e use "adicionar à tela inicial"
 
 ## Instalar
 
-Servidor e app desktop para Linux e Windows estão nas [releases](https://github.com/mindblow-org/desktop/releases/latest). Para compilar e instalar como serviço na sua máquina:
+No Linux, o instalador baixa da release mais nova. Rodar de novo atualiza.
 
 ```sh
-./deploy/install.sh      # compila, sobe o serviço e publica na tailnet; no fim imprime o link
-cargo run -p mindblow-app --release   # janela desktop, com o servidor junto
+curl -fsSL https://github.com/mindblow-org/desktop/releases/latest/download/install.sh | bash                  # app desktop, com ícone no menu
+curl -fsSL https://github.com/mindblow-org/desktop/releases/latest/download/install.sh | bash -s -- --servidor  # serviço sempre ligado, na tailnet
 ```
+
+No Windows, o `-setup.exe` das [releases](https://github.com/mindblow-org/desktop/releases/latest). Detalhes em [Deploy e configuração](docs/deploy.md).
 
 ## Desenvolver
 
 ```sh
 cargo run -p server      # API em :7341
+cargo run -p mindblow-app --release   # janela desktop, com o servidor junto
+./install.sh --fonte     # o serviço compilado deste checkout
 cd web && pnpm dev       # interface em :5341, com proxy para a API
 cargo test && (cd web && pnpm test && pnpm check)
 ```
