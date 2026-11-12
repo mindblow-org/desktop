@@ -1,7 +1,11 @@
-use std::{sync::Arc, time::Duration};
+use std::{io::Write, sync::Arc, time::Duration};
 
 use domain::{Feed, Gone, Id, Link, Shot, Took};
-use reqwest::{Client, RequestBuilder, Response, StatusCode, Url, header::CONTENT_TYPE};
+use flate2::{Compression, write::GzEncoder};
+use reqwest::{
+    Client, RequestBuilder, Response, StatusCode, Url,
+    header::{CONTENT_ENCODING, CONTENT_TYPE},
+};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use tokio::net::TcpStream;
@@ -11,6 +15,9 @@ use tokio_tungstenite::{Connector, MaybeTlsStream, WebSocketStream, connect_asyn
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Page {
     pub node: Id,
+    /// Aceita o lote do `POST /api/sync` em gzip. Mindblow antigo não manda, e o lote vai cru.
+    #[serde(default)]
+    pub gzip: bool,
     #[serde(flatten)]
     pub feed: Feed,
 }
@@ -61,9 +68,11 @@ impl Wire {
         sync(r).await?.json().await.map_err(off)
     }
 
-    pub async fn send(&self, l: &Link, notes: Vec<Shot>, gone: Vec<Gone>) -> Result<Took, Fail> {
-        let r = self.auth(l, self.http.post(format!("{}/api/sync", l.url)).json(&json!({ "notes": notes, "gone": gone })));
-        sync(r).await?.json().await.map_err(off)
+    pub async fn send(&self, l: &Link, notes: Vec<Shot>, gone: Vec<Gone>, gzip: bool) -> Result<Took, Fail> {
+        let body = serde_json::to_vec(&json!({ "notes": notes, "gone": gone })).map_err(|e| Fail::Bad(e.to_string()))?;
+        let r = self.http.post(format!("{}/api/sync", l.url)).header(CONTENT_TYPE, "application/json");
+        let r = if gzip { r.header(CONTENT_ENCODING, "gzip").body(zip(&body)) } else { r.body(body) };
+        sync(self.auth(l, r)).await?.json().await.map_err(off)
     }
 
     /// Os bytes de uma imagem, ou nada se o outro lado também não tem.
@@ -93,6 +102,7 @@ impl Wire {
             let mut q = u.query_pairs_mut();
             q.append_pair("d", &node.to_string());
             q.append_pair("n", name);
+            q.append_pair("lean", "true");
             if !l.token.is_empty() {
                 q.append_pair("token", &l.token);
             }
@@ -126,6 +136,12 @@ fn tls() -> Arc<rustls::ClientConfig> {
 }
 
 /// Rotas de sync: 404 quer dizer que o outro lado ainda não tem sync.
+fn zip(b: &[u8]) -> Vec<u8> {
+    let mut e = GzEncoder::new(Vec::new(), Compression::default());
+    e.write_all(b).expect("gzip em memória");
+    e.finish().expect("gzip em memória")
+}
+
 async fn sync(r: RequestBuilder) -> Result<Response, Fail> {
     let r = r.send().await.map_err(off)?;
     if r.status() == StatusCode::NOT_FOUND {
