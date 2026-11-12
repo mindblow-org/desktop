@@ -15,6 +15,7 @@ use axum::{
 };
 use domain::image::MAX;
 use serde_json::{Value, json};
+use tower_http::{compression::CompressionLayer, decompression::RequestDecompressionLayer};
 
 use crate::{App, web};
 
@@ -34,8 +35,11 @@ pub fn router(a: App) -> Router {
         .route("/api/sync", get(sync::page).post(sync::take).layer(DefaultBodyLimit::max(BATCH)))
         .route("/api/sync/now", post(sync::now))
         .route("/api/links", get(links::list).post(links::add).delete(links::remove))
-        .route("/api/live", get(ws::live))
         .fallback(web::serve)
+        .layer(CompressionLayer::new())
+        .layer(RequestDecompressionLayer::new())
+        // Depois das camadas de gzip: o upgrade do WebSocket não passa por elas.
+        .route("/api/live", get(ws::live))
         .layer(middleware::from_fn_with_state(a.clone(), guard::check))
         .with_state(a)
 }

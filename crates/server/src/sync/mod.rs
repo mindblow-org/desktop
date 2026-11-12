@@ -168,11 +168,13 @@ impl Syncer {
     /// Um sync completo com o link: primeiro puxa, depois empurra.
     async fn round(&self, url: &str, first: bool) -> Result<(), Fail> {
         let Some(mut l) = self.link(url)? else { return Err(Fail::Bad("link removido".into())) };
+        let mut gzip;
         loop {
             let p = self.wire.page(&l, l.pull, PAGE).await?;
             if p.node == self.node {
                 return Err(Fail::Me);
             }
+            gzip = p.gzip;
             let (seq, more) = (p.feed.seq, p.feed.more);
             let t = self.notes.take(p.feed.notes, p.feed.gone)?;
             // Nada daqui esperando: o que entrou agora não precisa voltar para lá.
@@ -195,7 +197,7 @@ impl Syncer {
                 break;
             }
             let (seq, more) = (f.seq, f.more);
-            let t = self.wire.send(&l, f.notes, f.gone).await?;
+            let t = self.wire.send(&l, f.notes, f.gone, gzip).await?;
             for id in t.need {
                 if let Ok((mime, data)) = self.notes.image(id) {
                     self.wire.put(&l, id, &mime, data).await?;

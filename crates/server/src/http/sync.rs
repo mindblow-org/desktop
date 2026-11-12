@@ -21,7 +21,7 @@ pub struct Since {
 
 pub async fn page(State(a): State<App>, Query(q): Query<Since>) -> Res<Json<Page>> {
     let limit = q.limit.unwrap_or(PAGE).clamp(1, PAGE);
-    Ok(Json(Page { node: a.node, feed: a.notes.feed(q.since, limit)? }))
+    Ok(Json(Page { node: a.node, gzip: true, feed: a.notes.feed(q.since, limit)? }))
 }
 
 #[derive(Deserialize)]
