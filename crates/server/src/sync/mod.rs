@@ -2,7 +2,10 @@ mod wire;
 
 use std::{
     collections::HashMap,
-    sync::{Arc, Mutex},
+    sync::{
+        Arc, Mutex,
+        atomic::{AtomicBool, Ordering::Relaxed},
+    },
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
@@ -21,10 +24,14 @@ use crate::{Live, live::Peer};
 
 /// Mudanças por vez em cada sentido.
 pub const PAGE: usize = 50;
-/// Espera depois de um aviso, para juntar várias mudanças num sync só.
-const SETTLE: Duration = Duration::from_millis(300);
+/// Espera depois de um aviso, para juntar várias mudanças num sync só: digitar ou desenhar
+/// num board manda uma remessa a cada 2 s, não uma por palavra ou por traço.
+const SETTLE: Duration = Duration::from_secs(2);
 /// Sem aviso nenhum, sincroniza de novo depois disso.
 const IDLE: Duration = Duration::from_secs(60);
+/// O mesmo, com o `/api/live` de lá ligado: os avisos chegam por ele, e a volta sem aviso é só
+/// garantia. Menos voltas, menos vezes o rádio do celular acorda.
+const QUIET: Duration = Duration::from_secs(300);
 /// Primeira espera depois de uma falha; dobra até `MAX`.
 const MIN: Duration = Duration::from_secs(1);
 const MAX: Duration = Duration::from_secs(30);
@@ -113,10 +120,11 @@ impl Syncer {
         let kick = Arc::new(Notify::new());
         let up = Arc::new(Notify::new());
         let dial = Arc::new(Notify::new());
+        let on = Arc::new(AtomicBool::new(false));
         let state = State { url: l.url.clone(), token: l.token.clone(), state: "wait".into(), at: None, error: None };
         let tasks = vec![
-            tokio::spawn(self.clone().turn(l.url.clone(), kick.clone(), up.clone())).abort_handle(),
-            tokio::spawn(self.clone().listen(l.url.clone(), kick.clone(), up, dial.clone())).abort_handle(),
+            tokio::spawn(self.clone().turn(l.url.clone(), kick.clone(), up.clone(), on.clone())).abort_handle(),
+            tokio::spawn(self.clone().listen(l.url.clone(), kick.clone(), up, dial.clone(), on)).abort_handle(),
         ];
         let old = self.runs.lock().unwrap().insert(l.url.clone(), Run { kick, dial, tasks, state });
         if let Some(r) = old {
@@ -126,7 +134,7 @@ impl Syncer {
     }
 
     /// O laço de um link: sincroniza, espera um aviso (ou o tempo) e repete.
-    async fn turn(self: Arc<Self>, url: String, kick: Arc<Notify>, up: Arc<Notify>) {
+    async fn turn(self: Arc<Self>, url: String, kick: Arc<Notify>, up: Arc<Notify>, on: Arc<AtomicBool>) {
         let mut wait = MIN;
         let mut first = true;
         loop {
@@ -135,9 +143,10 @@ impl Syncer {
                     first = false;
                     wait = MIN;
                     self.set(&url, "ok", None);
+                    let idle = if on.load(Relaxed) { QUIET } else { IDLE };
                     tokio::select! {
                         _ = kick.notified() => sleep(SETTLE).await,
-                        _ = sleep(IDLE) => {}
+                        _ = sleep(idle) => {}
                     }
                 }
                 Err(Fail::Me) => return self.halt(&url, "self"),
@@ -226,7 +235,7 @@ impl Syncer {
 
     /// Fica ligado no `/api/live` do link: mudança lá acorda o laço, e a lista de
     /// aparelhos de lá entra na daqui. Também leva o nome deste aparelho.
-    async fn listen(self: Arc<Self>, url: String, kick: Arc<Notify>, up: Arc<Notify>, dial: Arc<Notify>) {
+    async fn listen(self: Arc<Self>, url: String, kick: Arc<Notify>, up: Arc<Notify>, dial: Arc<Notify>, on: Arc<AtomicBool>) {
         let mut wait = MIN;
         loop {
             let Ok(Some(l)) = self.link(&url) else { return };
@@ -235,6 +244,7 @@ impl Syncer {
             match self.wire.live(&l, self.node, &name).await {
                 Ok(ws) => {
                     wait = MIN;
+                    on.store(true, Relaxed);
                     up.notify_one();
                     kick.notify_one();
                     let (mut tx, mut rx) = ws.split();
@@ -256,6 +266,7 @@ impl Syncer {
                             _ = dial.notified() => break,
                         }
                     }
+                    on.store(false, Relaxed);
                     self.live.far(&url, Vec::new());
                 }
                 Err(Fail::Locked) => return,
