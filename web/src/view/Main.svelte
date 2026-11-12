@@ -6,7 +6,7 @@
   import { store } from '../lib/notes/store.svelte'
   import type { Kind } from '../lib/notes/types'
   import { MAX, scan } from '../lib/scan'
-  import { shell } from '../lib/shell'
+  import { shell, type At } from '../lib/shell'
   import Bar from '../lib/tabs/Bar.svelte'
   import { tabs } from '../lib/tabs/store.svelte'
   import { go } from '../lib/ui/motion.svelte'
@@ -45,11 +45,11 @@
     go(() => tabs.close(id))
   }
 
-  function detach() {
-    if (!note) return
-    const n = note
+  function detach(id = tabs.on, at?: At) {
+    const n = id ? store.find(id) : undefined
+    if (!n) return
     void store.flush(n.id)
-    shell.detach(n)
+    shell.detach(n, at)
     go(() => tabs.close(n.id))
   }
 
@@ -140,7 +140,7 @@
 <svelte:window onkeydown={key} onhashchange={hash} />
 
 <div class="app">
-  <Bar bind:picking onopen={open} onclose={close} onhome={home} onpick={pick} onscan={() => camera.click()} onfind={() => (finding = true)} />
+  <Bar bind:picking onopen={open} onclose={close} ondetach={detach} onhome={home} onpick={pick} onscan={() => camera.click()} onfind={() => (finding = true)} />
   <input bind:this={camera} type="file" accept="image/*" capture="environment" multiple hidden onchange={scanned} />
   <main>
     <div class="pane" hidden={!!note}>
@@ -148,7 +148,7 @@
     </div>
     {#if note}
       {#key note.id}
-        <Open {note} onback={home} ondetach={detach} />
+        <Open {note} onback={home} ondetach={() => detach()} />
       {/key}
     {/if}
   </main>

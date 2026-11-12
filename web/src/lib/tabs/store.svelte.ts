@@ -1,5 +1,5 @@
 import { read, write } from '../local'
-import { close, open, prune, solo, type Tabs } from './tabs'
+import { close, move, open, prune, solo, type Tabs } from './tabs'
 
 const KEY = 'mindblow.tabs'
 const narrow = matchMedia('(max-width: 640px)')
@@ -22,6 +22,10 @@ class TabStore {
 
   close(id: string) {
     this.#put(close(this.#s, id))
+  }
+
+  move(id: string, to: number) {
+    this.#put(move(this.#s, id, to))
   }
 
   home() {
