@@ -74,6 +74,7 @@ O `body` de um board vazio é `""`. Com desenho, é um JSON assim:
 | GET | `/api/health` | | `{ok, version, link, node}` |
 | GET | `/api/sync` | `?since=&limit=` | página do feed |
 | POST | `/api/sync` | `{notes, gone}` | `{from, to, need}` |
+| POST | `/api/sync/now` | | `204` |
 | GET | `/api/links` | | estado do sync com cada link |
 | POST | `/api/links` | `{url, token?}` | `201` lista |
 | DELETE | `/api/links` | `?url=` | `204` |
@@ -125,6 +126,8 @@ Cada mindblow guarda um feed das próprias mudanças e sincroniza com os links q
 - `gone` são notas excluídas, com quando.
 
 `POST /api/sync` leva `{notes, gone}` no mesmo formato e junta campo a campo com o que já existe (o carimbo mais novo ganha). Responde `{from, to, need}`: a posição do feed antes e depois do lote e as imagens que faltam, para quem mandou enviar por `PUT /api/images/{img}`.
+
+`POST /api/sync/now` avisa que a rede do aparelho mudou: cada link reconecta na hora e sincroniza, sem esperar a próxima tentativa.
 
 `POST /api/links` aceita o link como o QR traz (`https://pc.tail1234.ts.net:7341/#token=…`): fica a origem, e o `#token=` vira o token. Ligar de novo um link que já existe troca o token e mantém o que já foi sincronizado. O estado de cada link é `wait`, `ok`, `off` (não respondeu), `old` (mindblow sem sync), `locked` (token não serve), `self` (é este aparelho) ou `fail`, com `at` do último sync que deu certo.
 

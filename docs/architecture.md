@@ -70,9 +70,6 @@ As fixadas vêm primeiro e as outras depois. Dentro de cada grupo, vale o `rank:
 
 ## Sync
 
-> [!WARNING]
-> O sync foi testado entre servidores no PC (`crates/server/tests/sync.rs`), mas o app Android com o servidor junto ainda não foi validado num celular de verdade. Ver o roteiro em "Testar no aparelho" no README do [app Android](https://github.com/mindblow-org/android).
-
 ### Na interface
 
 - O cliente fala só com o servidor do aparelho. Toda escrita volta como evento em `/api/live` para todos os clientes dele, inclusive quem escreveu, e o que chega pelo sync também.
@@ -88,10 +85,10 @@ As fixadas vêm primeiro e as outras depois. Dentro de cada grupo, vale o `rank:
 - **Exclusão.** Excluir guarda a nota em `gone`. Ela some do outro lado se lá ela não foi editada depois; se foi, a edição ganha e a nota volta para quem excluiu. Exclusão de nota que este aparelho nem tem também fica guardada, para uma cópia velha vinda de um terceiro não ressuscitar a nota.
 - **Syncer.** Para cada link (tabela `links`), um laço puxa o feed de lá (cursor `pull`), junta com `take` e depois empurra o daqui (cursor `push`). `take` só grava o que muda algo, então o que volta para onde saiu não ecoa. Ele também devolve a posição do feed antes e depois (`Took`): se nada daqui estava esperando, o que entrou não precisa voltar, e o cursor anda junto. O mesmo vale do outro lado no `POST /api/sync`.
 - **Imagens.** A nota anda sem os bytes. Quem recebe responde as imagens que faltam (`need`), e elas vão por `PUT /api/images/{id}` ou são baixadas por `GET`. Na primeira volta de cada link, `lack` procura as que ficaram para trás.
-- **Quando sincroniza.** Mudança daqui (pelo `Bus`), mudança de lá (o laço fica ligado no `/api/live` do link) ou um minuto sem nada. Sem resposta, a espera dobra de 1 s até 30 s, e o `/api/live` de lá voltar acorda o laço na hora. Token que não serve ou link que é este próprio aparelho param o laço até o link mudar.
+- **Quando sincroniza.** Mudança daqui (pelo `Bus`), mudança de lá (o laço fica ligado no `/api/live` do link) ou um minuto sem nada. Sem resposta, a espera dobra de 1 s até 30 s, e o `/api/live` de lá voltar acorda o laço na hora. Quando a rede do aparelho muda, `POST /api/sync/now` corta a espera: o `/api/live` de cada link reconecta na hora (a conexão antiga pode ter morrido com a rede velha sem ninguém saber), e reconectar acorda o laço. O app Android chama ele quando a rede volta. Token que não serve ou link que é este próprio aparelho param o laço até o link mudar.
 - **Estado.** Cada link está `wait`, `ok`, `off`, `old` (mindblow sem sync), `locked`, `self` ou `fail`. Ele vem em `GET /api/links` e no evento `sync`.
 - **TLS.** O cliente usa rustls com ring e as raízes do `webpki-roots`, sem o verificador do sistema, para compilar igual no Linux, no Windows e no Android.
-- **Limites.** O mesmo campo editado nos dois lados fica com a edição mais nova: dois textos no mesmo corpo não se misturam, e um board é um campo só (a cena inteira). No Android, o sync roda enquanto o processo do app está vivo.
+- **Limites.** O mesmo campo editado nos dois lados fica com a edição mais nova: dois textos no mesmo corpo não se misturam, e um board é um campo só (a cena inteira). No Android, com o app fechado, quem sobe o que ficou só no celular é um job do sistema que roda quando há rede (ver o README do [app Android](https://github.com/mindblow-org/android)); o que muda no PC só desce quando o app abre.
 
 ## Dispositivos
 
