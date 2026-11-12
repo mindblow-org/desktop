@@ -230,8 +230,6 @@
     flex-direction: column;
     border-radius: var(--r-lg);
     cursor: grab;
-    user-select: none;
-    -webkit-user-select: none;
     touch-action: manipulation;
     outline-offset: 3px;
     transition:
