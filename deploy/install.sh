@@ -15,7 +15,7 @@ have cargo || die "Rust (cargo) não encontrado."
 have pnpm || die "pnpm não encontrado: npm install -g pnpm"
 have systemctl || die "systemd não encontrado."
 
-busy="$(ss -ltnpH "sport = :$PORT" 2>/dev/null | grep -v '"mindblow"' || true)"
+busy="$(ss -ltnpH "sport = :$PORT and ( src 127.0.0.1 or src 0.0.0.0 or src [::1] or src [::] )" 2>/dev/null | grep -v '"mindblow"' || true)"
 [ -z "$busy" ] || die "A porta $PORT já está em uso por outro programa. Escolha outra: MINDBLOW_PORT=<porta> ./deploy/install.sh"
 
 say "Compilando a interface"
