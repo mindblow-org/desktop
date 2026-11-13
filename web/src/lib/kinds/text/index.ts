@@ -14,4 +14,8 @@ export const text: Spec = {
   Full,
   empty: (n) => !n.title.trim() && !n.body.trim() && !n.images.length,
   title: (n) => n.title.trim() || line(n.body) || 'Sem título',
+  foot(n) {
+    const w = n.body.trim() ? n.body.trim().split(/\s+/).length : 0
+    return `${w} ${w === 1 ? 'palavra' : 'palavras'}`
+  },
 }

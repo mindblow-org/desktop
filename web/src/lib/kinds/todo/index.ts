@@ -14,4 +14,5 @@ export const todo: Spec = {
   Full,
   empty: (n) => !n.title.trim() && !n.items.length && !n.images.length,
   title: (n) => n.title.trim() || 'Lista',
+  foot: () => '',
 }

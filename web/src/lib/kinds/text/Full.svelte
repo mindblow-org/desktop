@@ -4,14 +4,12 @@
   import type { Note } from '../../notes/types'
   import Gallery from '../../images/Gallery.svelte'
   import { fit } from '../../ui/grow'
-  import Meta from '../Meta.svelte'
 
   let { note, solo = false }: { note: Note; solo?: boolean } = $props()
   let title = $derived(note.title)
   let body = $derived(note.body)
   let te: HTMLTextAreaElement
   let be: HTMLTextAreaElement
-  const words = $derived(body.trim() ? body.trim().split(/\s+/).length : 0)
 
   onMount(() => {
     if (!note.title && !note.body) te.focus()
@@ -19,9 +17,6 @@
 </script>
 
 <article class="page" class:solo>
-  {#if !solo}
-    <Meta {note} icon="text" label="texto">{words} {words === 1 ? 'palavra' : 'palavras'}</Meta>
-  {/if}
   <textarea
     class="title"
     rows="1"

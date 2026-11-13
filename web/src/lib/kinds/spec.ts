@@ -15,6 +15,7 @@ export interface Spec {
   Full: Component<{ note: Note; solo?: boolean; kit?: boolean }>
   empty(n: Note): boolean
   title(n: Note): string
+  foot?(n: Note): string
 }
 
 export function line(s: string) {

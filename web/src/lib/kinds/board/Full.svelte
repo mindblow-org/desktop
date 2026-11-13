@@ -729,7 +729,7 @@
       onkeydown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
     />
     {#if !solo}
-      <Meta {note} icon="board" label="board">{els.length} {els.length === 1 ? 'elemento' : 'elementos'}</Meta>
+      <Meta {note} icon="board" label="board" extra="{els.length} {els.length === 1 ? 'elemento' : 'elementos'}" />
     {/if}
   </header>
 
