@@ -5,6 +5,7 @@
   import Gallery from '../../images/Gallery.svelte'
   import { fit } from '../../ui/grow'
   import Meta from '../Meta.svelte'
+  import { size } from './size.svelte'
 
   let { note, solo = false }: { note: Note; solo?: boolean } = $props()
   let title = $derived(note.title)
@@ -16,9 +17,16 @@
   onMount(() => {
     if (!note.title && !note.body) te.focus()
   })
+
+  const grow = (el: HTMLTextAreaElement) => {
+    void size.v
+    return fit(el)
+  }
 </script>
 
-<article class="page" class:solo>
+<svelte:window onkeydown={size.press} onstorage={size.sync} />
+
+<article class="page" class:solo style:--z={size.v}>
   {#if !solo}
     <Meta {note} icon="text" label="texto">{words} {words === 1 ? 'palavra' : 'palavras'}</Meta>
   {/if}
@@ -29,7 +37,7 @@
     placeholder="Título"
     value={title}
     bind:this={te}
-    {@attach fit}
+    {@attach grow}
     oninput={(e) => store.edit(note.id, { title: (title = e.currentTarget.value) })}
     onkeydown={(e) => {
       if (e.key === 'Enter') {
@@ -45,7 +53,7 @@
     placeholder="Escreva…"
     value={body}
     bind:this={be}
-    {@attach fit}
+    {@attach grow}
     oninput={(e) => store.edit(note.id, { body: (body = e.currentTarget.value) })}
   ></textarea>
 </article>
@@ -61,7 +69,7 @@
     display: block;
     width: 100%;
     margin: 14px 0 24px;
-    font-size: 34px;
+    font-size: calc(34px * var(--z));
     line-height: 1.15;
     font-weight: 600;
     letter-spacing: -0.025em;
@@ -72,7 +80,7 @@
     display: block;
     width: 100%;
     min-height: 40vh;
-    font-size: 16.5px;
+    font-size: calc(16.5px * var(--z));
     line-height: 1.75;
     color: var(--soft);
     overflow: hidden;
@@ -84,11 +92,11 @@
 
   .solo .title {
     margin-top: 0;
-    font-size: 24px;
+    font-size: calc(24px * var(--z));
   }
 
   .solo .body {
-    font-size: 15px;
+    font-size: calc(15px * var(--z));
     min-height: 60vh;
   }
 
@@ -98,7 +106,7 @@
     }
 
     .title {
-      font-size: 28px;
+      font-size: calc(28px * var(--z));
     }
   }
 </style>
