@@ -45,7 +45,7 @@
     </div>
     {#if !solo}
       <div class="row">
-        <Meta {note} icon="sticky" label="sticky">{body.length}/500</Meta>
+        <Meta {note} icon="sticky" label="sticky" extra="{body.length}/500" />
         <Colors {note} />
       </div>
     {/if}

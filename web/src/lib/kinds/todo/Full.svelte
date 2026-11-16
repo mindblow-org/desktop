@@ -8,7 +8,6 @@
   import Gallery from '../../images/Gallery.svelte'
   import { fit } from '../../ui/grow'
   import Icon from '../../ui/Icon.svelte'
-  import Meta from '../Meta.svelte'
 
   let { note, solo = false }: { note: Note; solo?: boolean } = $props()
   let title = $derived(note.title)
@@ -52,9 +51,6 @@
 </script>
 
 <article class="page" class:solo>
-  {#if !solo}
-    <Meta {note} icon="todo" label="todo" />
-  {/if}
   <textarea
     class="title"
     rows="1"

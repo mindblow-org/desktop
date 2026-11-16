@@ -2,6 +2,7 @@
   import { onMount } from 'svelte'
   import Catch from '../lib/images/Catch.svelte'
   import { kinds } from '../lib/kinds'
+  import Meta from '../lib/kinds/Meta.svelte'
   import { store } from '../lib/notes/store.svelte'
   import type { Note } from '../lib/notes/types'
   import { shell } from '../lib/shell'
@@ -44,6 +45,9 @@
       <s.Full {note} {kit} />
     </Catch>
   </div>
+  {#if s.foot}
+    <div class="foot"><Meta {note} icon={s.icon} label={s.label.toLowerCase()} extra={s.foot(note)} /></div>
+  {/if}
   <div class="tools" role="toolbar" aria-label="Ações da nota">
     {#if note.kind === 'board'}
       <button class="ib kit" class:on={kit} title="Ferramentas" aria-label="Ferramentas do board" aria-pressed={kit} onclick={() => (kit = !kit)}
@@ -135,6 +139,13 @@
     overflow: auto;
   }
 
+  .foot {
+    width: 100%;
+    max-width: 728px;
+    margin: 0 auto;
+    padding: 10px 24px 16px;
+  }
+
   footer {
     position: absolute;
     left: 20px;
@@ -223,6 +234,18 @@
 
     footer {
       bottom: calc(var(--dock) + 10px + env(safe-area-inset-bottom));
+    }
+
+    .open:has(> .foot) .body {
+      padding-bottom: 0;
+    }
+
+    .foot {
+      padding: 8px 20px calc(var(--dock) + 16px + env(safe-area-inset-bottom));
+    }
+
+    .open:has(> footer) .foot {
+      visibility: hidden;
     }
   }
 </style>
