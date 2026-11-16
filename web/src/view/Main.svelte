@@ -53,6 +53,10 @@
     go(() => tabs.close(n.id))
   }
 
+  function dock(id: string, at: number) {
+    go(() => tabs.open(id, at), id)
+  }
+
   async function pick(k: Kind) {
     const n = await store.add(k)
     go(() => tabs.open(n.id))
@@ -144,7 +148,7 @@
   <input bind:this={camera} type="file" accept="image/*" capture="environment" multiple hidden onchange={scanned} />
   <main>
     <div class="pane" hidden={!!note}>
-      <Grid onopen={open} />
+      <Grid onopen={open} ontab={dock} ondetach={detach} />
     </div>
     {#if note}
       {#key note.id}

@@ -16,8 +16,8 @@ class TabStore {
     return this.#s.on
   }
 
-  open(id: string) {
-    this.#put(open(this.#s, id))
+  open(id: string, at?: number) {
+    this.#put(open(this.#s, id, at))
   }
 
   close(id: string) {

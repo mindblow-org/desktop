@@ -22,7 +22,7 @@
   }
 </script>
 
-<div class="solo {note?.kind ?? ''}">
+<div class="solo {note?.kind ?? ''}" data-color={note?.kind === 'sticky' ? note.color || null : null}>
   <header data-tauri-drag-region>
     {#if s && note}
       <span class="k"><Icon name={s.icon} size={14} /></span>

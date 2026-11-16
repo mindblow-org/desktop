@@ -15,7 +15,7 @@
   </picture>
 </p>
 
-Há quatro tipos de nota: **sticky**, **texto**, **todo** e **board**. Elas ficam num grid em que dá para arrastar os cards, abrem em abas e qualquer uma pode virar uma janela própria. Outros apps criam, mudam e tiram notas pela API.
+Há quatro tipos de nota: **sticky**, **texto**, **todo** e **board**. Elas ficam num grid em que dá para arrastar os cards, abrem em abas e qualquer uma pode virar uma janela própria. Na nota de texto, Ctrl + e Ctrl - mudam o tamanho da letra, e Ctrl 0 volta ao normal. Outros apps criam, mudam e tiram notas pela API.
 
 Por baixo: servidor em Rust (axum + SQLite), interface em Svelte 5, app desktop em Tauri 2 e app Android. Os apps levam o servidor junto, com banco próprio; quando um aparelho alcança outro, eles trocam as mudanças campo a campo.
 

@@ -76,3 +76,25 @@ describe('celular, uma nota por vez', () => {
     expect(spot(mids, 3, 10)).toBe(0)
   })
 })
+
+describe('card do grid solto na barra', () => {
+  it('abre a aba entre as outras, onde foi solto', () => {
+    const mids = [50, 150, 250]
+    const t = { ids: ['a', 'b', 'c'], on: 'a' }
+    expect(open(t, 'n', spot(mids, -1, 170))).toEqual({ ids: ['a', 'b', 'n', 'c'], on: 'n' })
+  })
+
+  it('solto antes da primeira, vira a primeira', () => {
+    expect(open({ ids: ['a', 'b'], on: null }, 'n', spot([50, 150], -1, 10))).toEqual({ ids: ['n', 'a', 'b'], on: 'n' })
+  })
+
+  it('nota que já tinha aba muda de lugar e fica ativa', () => {
+    const mids = [50, 150, 250]
+    const t = { ids: ['a', 'b', 'c'], on: 'c' }
+    expect(open(t, 'a', spot(mids, 0, 300))).toEqual({ ids: ['b', 'c', 'a'], on: 'a' })
+  })
+
+  it('sem abas, abre a primeira', () => {
+    expect(open({ ids: [], on: null }, 'n', spot([], -1, 400))).toEqual({ ids: ['n'], on: 'n' })
+  })
+})

@@ -5,7 +5,7 @@ import { out } from './out.svelte'
 export function web(): Shell {
   const wide = matchMedia('(min-width: 720px) and (pointer: fine)').matches
   return {
-    can: { detach: wide, pin: false, frame: false },
+    can: { detach: wide, pin: false, frame: false, clip: false },
     detach(n, at) {
       const [w, h] = kinds[n.kind].win
       const pos = at ? `,left=${Math.round(at.x - 40)},top=${Math.round(at.y - 16)}` : ''
@@ -31,5 +31,6 @@ export function web(): Shell {
     minimize() {},
     maximize() {},
     close() {},
+    clip: async () => null,
   }
 }

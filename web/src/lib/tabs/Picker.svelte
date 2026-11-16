@@ -3,6 +3,7 @@
   import { order } from '../kinds'
   import type { Kind } from '../notes/types'
   import Icon from '../ui/Icon.svelte'
+  import { inside } from '../ui/inside'
 
   let { onpick, onscan, onclose }: { onpick: (k: Kind) => void; onscan: () => void; onclose: () => void } = $props()
   let el: HTMLDivElement
@@ -35,7 +36,7 @@
   })
 </script>
 
-<div class="pop" bind:this={el} role="dialog" aria-label="Nova nota">
+<div class="pop" bind:this={el} {@attach inside} role="dialog" aria-label="Nova nota">
   <div class="head"><span>nova nota</span><span>esc fecha</span></div>
   <div class="kinds">
     {#each order as s (s.kind)}
