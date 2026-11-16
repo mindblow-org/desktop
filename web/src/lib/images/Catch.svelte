@@ -1,14 +1,17 @@
 <script lang="ts">
-  import type { Snippet } from 'svelte'
+  import { tick, type Snippet } from 'svelte'
   import { fade } from 'svelte/transition'
   import { kinds } from '../kinds'
   import { store } from '../notes/store.svelte'
   import type { Note } from '../notes/types'
+  import { shell } from '../shell'
   import Icon from '../ui/Icon.svelte'
+  import { uris } from './uris'
 
   let { note, children }: { note: Note; children: Snippet } = $props()
   let depth = $state(0)
   let count = $state(0)
+  let root = $state<HTMLDivElement>()
 
   const has = (e: DragEvent) => [...(e.dataTransfer?.types ?? [])].includes('Files')
   const pics = (d: DataTransfer | null) => [...(d?.files ?? [])].filter((f) => f.type.startsWith('image/'))
@@ -20,18 +23,36 @@
     count = [...(e.dataTransfer?.items ?? [])].filter((i) => i.kind === 'file').length
   }
 
+  async function add(f: File[]) {
+    void store.attach(note.id, f)
+    await tick()
+    root?.querySelector('.gal')?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+  }
+
   function drop(e: DragEvent) {
     if (!has(e)) return
     e.preventDefault()
     depth = 0
-    void store.attach(note.id, [...(e.dataTransfer?.files ?? [])])
+    void add([...(e.dataTransfer?.files ?? [])])
   }
 
-  function paste(e: ClipboardEvent) {
+  async function paste(e: ClipboardEvent) {
     const f = pics(e.clipboardData)
-    if (!f.length) return
+    if (f.length) {
+      e.preventDefault()
+      return add(f)
+    }
+    const u = uris(e.clipboardData?.getData('text/uri-list') ?? '')
+    if (!u.length || !shell.can.clip) return
     e.preventDefault()
-    void store.attach(note.id, f)
+    const got = await Promise.all(
+      u.map(async (p) => {
+        const b = await shell.clip(p.uri)
+        return b && new File([b], p.name, { type: p.type })
+      }),
+    )
+    const ok = got.filter((x) => x !== null)
+    if (ok.length) await add(ok)
   }
 </script>
 
@@ -40,6 +61,7 @@
 {:else}
   <div
     class="catch"
+    bind:this={root}
     role="region"
     aria-label="Nota"
     onpaste={paste}

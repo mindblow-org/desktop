@@ -12,6 +12,7 @@ interface Win {
 }
 
 interface Tauri {
+  core: { invoke<T>(cmd: string, args?: object): Promise<T> }
   webviewWindow: {
     WebviewWindow: { new (label: string, o: object): Win; getByLabel(l: string): Promise<Win | null> }
   }
@@ -25,7 +26,7 @@ interface Tauri {
 export function tauri(t: Tauri): Shell {
   const me = () => t.window.getCurrentWindow()
   return {
-    can: { detach: true, pin: true, frame: true },
+    can: { detach: true, pin: true, frame: true, clip: /Linux/.test(navigator.userAgent) },
     async detach(n, at) {
       const label = `n-${n.id}`
       const has = await t.webviewWindow.WebviewWindow.getByLabel(label)
@@ -55,6 +56,7 @@ export function tauri(t: Tauri): Shell {
     minimize: () => void me().minimize(),
     maximize: () => void me().toggleMaximize(),
     close: () => void me().close(),
+    clip: (uri) => t.core.invoke<ArrayBuffer>('clip', { uri }).catch(() => null),
   }
 }
 

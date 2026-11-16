@@ -7,7 +7,7 @@ export interface At {
 }
 
 export interface Shell {
-  can: { detach: boolean; pin: boolean; frame: boolean }
+  can: { detach: boolean; pin: boolean; frame: boolean; clip: boolean }
   detach(n: Note, at?: At): void
   pin(on: boolean): Promise<void>
   home(id: string): void
@@ -15,4 +15,5 @@ export interface Shell {
   minimize(): void
   maximize(): void
   close(): void
+  clip(uri: string): Promise<ArrayBuffer | null>
 }
