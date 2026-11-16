@@ -1,5 +1,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+mod clip;
+
 use std::{env, fs, io::ErrorKind, path::PathBuf};
 
 use server::{Config, spawn};
@@ -11,6 +13,7 @@ fn main() {
     node();
     let url: Url = LOCAL.parse().expect("url");
     tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![clip::clip])
         .setup(move |app| {
             WebviewWindowBuilder::new(app, "main", WebviewUrl::External(url.clone()))
                 .title("mindblow")
