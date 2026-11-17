@@ -3,7 +3,7 @@ import type { Shell } from './shell'
 import { out } from './out.svelte'
 
 export function web(): Shell {
-  const wide = matchMedia('(min-width: 720px) and (pointer: fine)').matches
+  const wide = globalThis.matchMedia?.('(min-width: 720px) and (pointer: fine)').matches ?? false
   return {
     can: { detach: wide, pin: false, frame: false, clip: false },
     detach(n, at) {
@@ -32,5 +32,6 @@ export function web(): Shell {
     maximize() {},
     close() {},
     clip: async () => null,
+    pic: async () => null,
   }
 }

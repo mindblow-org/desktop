@@ -4,6 +4,6 @@ import { web } from './web'
 
 export type { At, Shell } from './shell'
 
-const t = (window as unknown as { __TAURI__?: Tauri }).__TAURI__
+const t = (globalThis as unknown as { __TAURI__?: Tauri }).__TAURI__
 
 export const shell: Shell = t ? tauri(t) : web()

@@ -1,9 +1,11 @@
 <script lang="ts">
   import { onMount, tick } from 'svelte'
   import { src } from '../../api/http'
+  import { pasted } from '../../images/pasted'
   import { uid } from '../../local'
   import { store } from '../../notes/store.svelte'
   import type { Note } from '../../notes/types'
+  import { shell } from '../../shell'
   import Icon, { type Name } from '../../ui/Icon.svelte'
   import Meta from '../Meta.svelte'
   import {
@@ -522,11 +524,8 @@
 
   function paste(e: ClipboardEvent) {
     if (writing(e.target) || !e.clipboardData) return
-    const files = [...e.clipboardData.files].filter((f) => f.type.startsWith('image/'))
-    if (files.length) {
-      e.preventDefault()
-      return void place(files, spot())
-    }
+    const p = pasted(e, shell)
+    if (p) return void p.then((f) => void (f.length && place(f, spot())))
     const t = e.clipboardData.getData('text/plain')
     if (!t.trim()) return
     e.preventDefault()
