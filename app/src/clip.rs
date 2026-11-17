@@ -19,6 +19,11 @@ pub fn clip(uri: String) -> Result<Response, String> {
     fs::read(&path).map(Response::new).map_err(|e| e.to_string())
 }
 
+#[tauri::command]
+pub fn pic() -> Result<Response, String> {
+    png().map(Response::new).ok_or_else(|| "sem imagem no clipboard".into())
+}
+
 #[cfg(target_os = "linux")]
 fn held() -> Vec<PathBuf> {
     gtk::Clipboard::get(&gtk::gdk::SELECTION_CLIPBOARD)
@@ -28,7 +33,19 @@ fn held() -> Vec<PathBuf> {
         .collect()
 }
 
+#[cfg(target_os = "linux")]
+fn png() -> Option<Vec<u8>> {
+    let d = gtk::Clipboard::get(&gtk::gdk::SELECTION_CLIPBOARD).wait_for_contents(&gtk::gdk::Atom::intern("image/png"))?;
+    let b = d.data();
+    (!b.is_empty() && b.len() as u64 <= MAX).then_some(b)
+}
+
 #[cfg(not(target_os = "linux"))]
 fn held() -> Vec<PathBuf> {
     Vec::new()
+}
+
+#[cfg(not(target_os = "linux"))]
+fn png() -> Option<Vec<u8>> {
+    None
 }
