@@ -67,7 +67,8 @@ As fixadas vêm primeiro e as outras depois. Dentro de cada grupo, vale o `rank:
 - No SQLite, os bytes ficam na tabela `blobs`, separada de `notes`. O backup continua sendo um arquivo só, e excluir uma nota leva as imagens dela junto.
 - O cliente reduz antes de enviar (`web/src/lib/images/shrink.ts`): lado maior de no máximo 2048px, WebP a 85% (ou JPEG onde não há encoder WebP). GIF vai como está, e se a versão reduzida sair maior que o original, vai o original.
 - Na interface, `Catch` captura colar e soltar, `Gallery` mostra o mosaico e `Viewer` abre em tela cheia (num portal no `<body>`, para escapar do contexto de empilhamento da view transition). No grid, a primeira imagem vira capa do card. No sticky, ela vira a foto de cima da polaroid.
-- Depois de colar ou soltar, a galeria rola para a vista se estava fora da tela. Arquivo copiado no gerenciador de arquivos chega ao `paste` só como `text/uri-list`; `images/uris.ts` tira dali as imagens e, no app do Linux, `Catch` pede os bytes ao comando `clip` do Tauri (`app/src/clip.rs`), que só lê o caminho se ele estiver no clipboard naquele momento, for imagem e tiver até 50 MB.
+- Depois de colar ou soltar, a galeria rola para a vista se estava fora da tela. `images/pasted.ts` decide o que o `paste` traz, para `Catch` e para o board. Arquivo copiado no gerenciador de arquivos chega só como `text/uri-list`; `images/uris.ts` tira dali as imagens e, no app do Linux, os bytes vêm do comando `clip` do Tauri (`app/src/clip.rs`), que só lê o caminho se ele estiver no clipboard naquele momento, for imagem e tiver até 50 MB.
+- O WebKitGTK que vai no AppImage (2.50, do Ubuntu 22.04) entrega o `paste` de um print ou de "copiar imagem" vazio, sem arquivo nem tipo. Nesse caso, sem texto no clipboard, o app do Linux pede o `image/png` ao comando `pic`, que lê do clipboard pelo GTK.
 
 ## Sync
 
