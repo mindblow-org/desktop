@@ -900,7 +900,7 @@
 
   .bar {
     position: absolute;
-    top: 14px;
+    bottom: 16px;
     left: 50%;
     translate: -50% 0;
     z-index: 3;
@@ -967,14 +967,40 @@
   }
 
   .solo .bar {
-    top: auto;
     bottom: 12px;
   }
 
-  @media (max-width: 960px) {
-    .bar {
-      top: auto;
-      bottom: 16px;
+  @media (min-width: 641px) {
+    .board:not(.solo) .bar {
+      top: 50%;
+      right: 15px;
+      bottom: auto;
+      left: auto;
+      translate: 0 -50%;
+      flex-direction: column;
+      max-width: none;
+      max-height: calc(100% - 128px);
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+
+    .board:not(.solo) .sep {
+      width: 18px;
+      height: 1px;
+      margin: 4px 0;
+    }
+
+    .board:not(.solo) .tones {
+      flex: none;
+      flex-direction: column;
+    }
+
+    .board:not(.solo) .tone {
+      margin: 3px 0;
+    }
+
+    .board:not(.solo) .zoom {
+      min-width: 40px;
     }
   }
 
