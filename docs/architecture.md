@@ -45,6 +45,7 @@ As fixadas vêm primeiro e as outras depois. Dentro de cada grupo, vale o `rank:
 - `Shapes` desenha a cena em SVG. O mesmo componente serve na miniatura do card (com `vector-effect: non-scaling-stroke`, para o traço não sumir quando a cena encolhe) e no quadro aberto. Seleção e alças são uma camada à parte, só no `Full`.
 - `Full` guarda só no fim do gesto: arrastar, desenhar, girar e redimensionar mexem numa cópia local, e a nota recebe uma edição por gesto. O desfazer é local, uma pilha com os `body` anteriores.
 - Imagens do board usam as imagens da nota (`Notes::attach`, tabela `blobs`); o elemento guarda só o id. Apagar a imagem da cena não apaga o arquivo na hora, para o desfazer funcionar. Ao fechar o board, a interface apaga as imagens que nenhum elemento usa mais.
+- A barra de ferramentas fica em coluna na lateral direita, abaixo dos botões da nota, e rola se a janela for baixa demais. Na janela destacada e no celular ela fica deitada, embaixo.
 - Excluir a seleção: tecla Delete/Backspace ou a lixeira da barra, que fica apagada sem seleção.
 - Copiar e colar usam os eventos `copy`/`paste` do navegador (funcionam sem HTTPS). O conteúdo vai como JSON `{"mindblow":"board","els":[…]}` em texto. Colando em outro board, as imagens são baixadas e enviadas de novo para a nota de destino.
 - A câmera (posição e zoom) não é salva. Ao abrir, o quadro enquadra o desenho.
