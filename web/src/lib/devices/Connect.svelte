@@ -7,6 +7,7 @@
   import { store } from '../notes/store.svelte'
   import type { Link } from '../notes/types'
   import { ago } from '../ui/ago'
+  import { copy as write } from '../ui/copy'
   import Icon from '../ui/Icon.svelte'
   import { clock } from '../ui/now.svelte'
   import { name } from './name'
@@ -79,16 +80,7 @@
 
   async function copy() {
     if (!base) return
-    try {
-      await navigator.clipboard.writeText(base)
-    } catch {
-      const t = document.createElement('textarea')
-      t.value = base
-      document.body.append(t)
-      t.select()
-      document.execCommand('copy')
-      t.remove()
-    }
+    await write(base)
     copied = true
     setTimeout(() => (copied = false), 1600)
   }

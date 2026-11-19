@@ -2,6 +2,8 @@
   import { onMount } from 'svelte'
   import Connect from '../devices/Connect.svelte'
   import { kinds } from '../kinds'
+  import { note } from '../menu/note'
+  import { menu } from '../menu/store.svelte'
   import { store } from '../notes/store.svelte'
   import type { Kind } from '../notes/types'
   import Icon from '../ui/Icon.svelte'
@@ -154,6 +156,7 @@
           onpointercancel={() => (drag = null)}
           onclick={() => (skip ? (skip = false) : onopen(id))}
           onauxclick={(e) => e.button === 1 && onclose(id)}
+          oncontextmenu={(e) => menu.show(e, note(id))}
           onkeydown={(e) => e.key === 'Enter' && onopen(id)}
         >
           <Icon name={s.icon} size={14} /><span class="t">{s.title(n)}</span>
