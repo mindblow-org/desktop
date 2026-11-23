@@ -18,7 +18,10 @@ struct Srv {
 
 impl Srv {
     async fn up(token: Option<&str>) -> Self {
-        let cfg = Config { token: token.map(Into::into), ..Config::default() };
+        Self::with(Config { token: token.map(Into::into), ..Config::default() }).await
+    }
+
+    async fn with(cfg: Config) -> Self {
         let db = Arc::new(Sqlite::memory().unwrap());
         let app = App::new(db.clone(), db.clone(), db, &cfg).unwrap();
         let l = TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -147,13 +150,9 @@ async fn devices_show_up_by_name() {
 
 #[tokio::test]
 async fn health_tells_the_tailnet_link() {
-    let cfg = Config { link: Some("https://pc.tail1234.ts.net:7341".into()), ..Config::default() };
-    let db = Arc::new(Sqlite::memory().unwrap());
-    let l = TcpListener::bind("127.0.0.1:0").await.unwrap();
-    let port = l.local_addr().unwrap().port();
-    tokio::spawn(async move { axum::serve(l, router(App::new(db.clone(), db.clone(), db, &cfg).unwrap())).await.unwrap() });
+    let s = Srv::with(Config { link: Some("https://pc.tail1234.ts.net:7341".into()), ..Config::default() }).await;
 
-    let h: Value = reqwest::get(format!("http://127.0.0.1:{port}/api/health")).await.unwrap().json().await.unwrap();
+    let h: Value = s.http.get(s.url("/api/health")).send().await.unwrap().json().await.unwrap();
     assert_eq!(h["link"], "https://pc.tail1234.ts.net:7341");
 }
 
