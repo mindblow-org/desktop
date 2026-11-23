@@ -6,7 +6,7 @@
   import type { Note } from '../notes/types'
   import { shell } from '../shell'
   import Icon from '../ui/Icon.svelte'
-  import { uris } from './uris'
+  import { pasted } from './pasted'
 
   let { note, children }: { note: Note; children: Snippet } = $props()
   let depth = $state(0)
@@ -14,7 +14,6 @@
   let root = $state<HTMLDivElement>()
 
   const has = (e: DragEvent) => [...(e.dataTransfer?.types ?? [])].includes('Files')
-  const pics = (d: DataTransfer | null) => [...(d?.files ?? [])].filter((f) => f.type.startsWith('image/'))
 
   function enter(e: DragEvent) {
     if (!has(e)) return
@@ -36,23 +35,8 @@
     void add([...(e.dataTransfer?.files ?? [])])
   }
 
-  async function paste(e: ClipboardEvent) {
-    const f = pics(e.clipboardData)
-    if (f.length) {
-      e.preventDefault()
-      return add(f)
-    }
-    const u = uris(e.clipboardData?.getData('text/uri-list') ?? '')
-    if (!u.length || !shell.can.clip) return
-    e.preventDefault()
-    const got = await Promise.all(
-      u.map(async (p) => {
-        const b = await shell.clip(p.uri)
-        return b && new File([b], p.name, { type: p.type })
-      }),
-    )
-    const ok = got.filter((x) => x !== null)
-    if (ok.length) await add(ok)
+  function paste(e: ClipboardEvent) {
+    void pasted(e, shell)?.then((f) => void (f.length && add(f)))
   }
 </script>
 

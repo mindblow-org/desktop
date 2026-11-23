@@ -17,6 +17,7 @@
     "core:window:allow-set-focus",
     "core:event:allow-emit-to",
     "core:event:allow-listen",
-    "allow-clip"
+    "allow-clip",
+    "allow-pic"
   ]
 }

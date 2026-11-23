@@ -13,7 +13,7 @@ fn main() {
     node();
     let url: Url = LOCAL.parse().expect("url");
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![clip::clip])
+        .invoke_handler(tauri::generate_handler![clip::clip, clip::pic])
         .setup(move |app| {
             WebviewWindowBuilder::new(app, "main", WebviewUrl::External(url.clone()))
                 .title("mindblow")

@@ -57,6 +57,7 @@ export function tauri(t: Tauri): Shell {
     maximize: () => void me().toggleMaximize(),
     close: () => void me().close(),
     clip: (uri) => t.core.invoke<ArrayBuffer>('clip', { uri }).catch(() => null),
+    pic: () => t.core.invoke<ArrayBuffer>('pic').catch(() => null),
   }
 }
 

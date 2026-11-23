@@ -16,4 +16,5 @@ export interface Shell {
   maximize(): void
   close(): void
   clip(uri: string): Promise<ArrayBuffer | null>
+  pic(): Promise<ArrayBuffer | null>
 }

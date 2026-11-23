@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-pic"
+description = "Enables the pic command without any pre-configured scope."
+commands.allow = ["pic"]
+
+[[permission]]
+identifier = "deny-pic"
+description = "Denies the pic command without any pre-configured scope."
+commands.deny = ["pic"]
