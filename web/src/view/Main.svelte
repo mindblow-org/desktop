@@ -2,6 +2,7 @@
   import Palette from '../lib/find/Palette.svelte'
   import Grid from '../lib/grid/Grid.svelte'
   import { kinds } from '../lib/kinds'
+  import Menu from '../lib/menu/Menu.svelte'
   import { write } from '../lib/kinds/board/scene'
   import { store } from '../lib/notes/store.svelte'
   import type { Kind } from '../lib/notes/types'
@@ -161,6 +162,8 @@
 {#if finding}
   <Palette onopen={found} onclose={() => (finding = false)} />
 {/if}
+
+<Menu />
 
 {#if store.locked}
   <Lock />

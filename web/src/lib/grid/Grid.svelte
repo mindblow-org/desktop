@@ -2,6 +2,8 @@
   import { onMount } from 'svelte'
   import { fade } from 'svelte/transition'
   import { kinds, order as specs } from '../kinds'
+  import { note } from '../menu/note'
+  import { menu } from '../menu/store.svelte'
   import { place } from '../notes/rank'
   import { store } from '../notes/store.svelte'
   import type { Kind, Note } from '../notes/types'
@@ -181,6 +183,7 @@
           onpointerup={up}
           onpointercancel={cancel}
           onlostpointercapture={lost}
+          oncontextmenu={(e) => menu.show(e, note(n.id))}
           onkeydown={(e) => e.key === 'Enter' && e.target === e.currentTarget && onopen(n.id)}
           tabindex="0"
           role="button"
