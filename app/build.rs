@@ -1,3 +1,3 @@
 fn main() {
-    tauri_build::try_build(tauri_build::Attributes::new().app_manifest(tauri_build::AppManifest::new().commands(&["clip"]))).expect("tauri")
+    tauri_build::try_build(tauri_build::Attributes::new().app_manifest(tauri_build::AppManifest::new().commands(&["clip", "pic"]))).expect("tauri")
 }
